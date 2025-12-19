@@ -9,6 +9,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Success or error message
+$successMessage = '';
+if (isset($_GET['success'])) {
+    $successMessage = htmlspecialchars($_GET['success']);
+}
+
 // Fetch bookings
 $stmt = $conn->prepare("
     SELECT * FROM bookings
@@ -31,7 +37,6 @@ function get_booking_items($conn, $booking_id) {
 }
 
 function get_item_details($conn, $type, $id) {
-    // ✅ Include duration_minutes
     if ($type === 'package') {
         $stmt = $conn->prepare("SELECT id, package_name AS name, description, price, duration_minutes FROM packages WHERE id = ?");
     } else {
@@ -71,6 +76,13 @@ tailwind.config = {
 <div class="max-w-5xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-blue-700 mb-8 text-center">My Appointments</h1>
 
+    <!-- Success message -->
+    <?php if (!empty($successMessage)): ?>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 text-center">
+            <?= $successMessage ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (count($bookings) == 0): ?>
         <p class="text-center text-gray-600">You have no bookings yet.</p>
     <?php endif; ?>
@@ -94,7 +106,6 @@ tailwind.config = {
             </div>
 
            <?php
-           // Calculate total duration for this booking
            $total_minutes = 0;
            $items = get_booking_items($conn, $booking['id']);
            foreach ($items as $item) {
@@ -102,7 +113,6 @@ tailwind.config = {
                $total_minutes += (int)($details['duration_minutes'] ?? 0);
            }
 
-           // Calculate end time
            $start_time = strtotime($booking['time_slot']);
            $end_time = $start_time + ($total_minutes * 60);
            ?>
