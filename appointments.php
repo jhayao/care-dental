@@ -104,27 +104,35 @@ tailwind.config = {
                 <?= htmlspecialchars($booking['status']) ?>
                 </span>
             </div>
+<?php
+$total_minutes = 0;
+$items = get_booking_items($conn, $booking['id']);
 
-           <?php
-           $total_minutes = 0;
-           $items = get_booking_items($conn, $booking['id']);
-           foreach ($items as $item) {
-               $details = get_item_details($conn, $item['item_type'], $item['item_id']);
-               $total_minutes += (int)($details['duration_minutes'] ?? 0);
-           }
+// Sum up the duration of all items in the booking
+foreach ($items as $item) {
+    $details = get_item_details($conn, $item['item_type'], $item['item_id']);
+    $total_minutes += (int)($details['duration_minutes'] ?? 0);
+}
 
-           $start_time = strtotime($booking['time_slot']);
-           $end_time = $start_time + ($total_minutes * 60);
-           ?>
+// Fallback: if total_minutes is 0, set a default duration (e.g., 30 minutes)
+if ($total_minutes === 0) $total_minutes = 30;
+
+// Calculate start and end time
+$start_time = strtotime($booking['appointment_time']);
+$end_time = $start_time + ($total_minutes * 60);
+?>
+
 
 <p class="text-gray-700 mt-2">
-    <strong>Date:</strong> <?= date("M d, Y", strtotime($booking['booking_date'])) ?>
+    <strong>Date:</strong> <?= date("M d, Y", strtotime($booking['appointment_date'])) ?>
     &nbsp;&nbsp; | &nbsp;&nbsp;
-    <strong>Time:</strong> <?= formatTime12($booking['time_slot']) ?> - <?= formatTime12(date('H:i:s', $end_time)) ?>
+    <strong>Time:</strong> <?= formatTime12($booking['appointment_time']) ?> - <?= formatTime12(date('H:i:s', $end_time)) ?>
     <?php if (strtolower($booking['status']) === 'rescheduled'): ?>
         <span class="text-blue-600 font-semibold">(Rescheduled)</span>
     <?php endif; ?>
 </p>
+
+
 
             <hr class="my-4">
 

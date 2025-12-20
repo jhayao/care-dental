@@ -34,10 +34,9 @@ function get_item_details($conn, $type, $id) {
     return $item;
 }
 
-/* ================= TOTAL COMPUTATION ================= */
+/* ================= TOTAL COMPUTATION (NO BOOKING FEE) ================= */
 $subtotal = 0;
 $total_minutes = 0;
-$booking_fee = 50;
 
 foreach ($_SESSION['cart'] as $item) {
     $details = get_item_details($conn, $item['type'], $item['id']);
@@ -48,7 +47,7 @@ foreach ($_SESSION['cart'] as $item) {
 }
 
 $discount = ($category === 'Senior' || $category === 'PWD') ? $subtotal * 0.20 : 0;
-$total = $subtotal - $discount + $booking_fee;
+$total = $subtotal - $discount;
 
 /* Convert total minutes to hours + minutes */
 $hours = floor($total_minutes / 60);
@@ -77,9 +76,10 @@ while ($row = $result->fetch_assoc()) {
     $start = strtotime($row['appointment_time']);
     $end = $start + ($row['duration_minutes'] * 60);
     $existing_bookings[$date][] = [
-        'start' => date("H:i", $start),
-        'end'   => date("H:i", $end)
-    ];
+    'start' => $start,
+    'end'   => $end
+];
+
 }
 $stmt->close();
 
@@ -94,13 +94,11 @@ foreach ($available_slots as $date => $slots) {
         while (($current + $total_minutes * 60) <= $slot_end) {
             $current_end = $current + $total_minutes * 60;
 
-            // Check overlap with bookings
             $overlap = false;
             if (isset($existing_bookings[$date])) {
                 foreach ($existing_bookings[$date] as $b) {
                     $b_start = strtotime($date . ' ' . $b['start']);
                     $b_end = strtotime($date . ' ' . $b['end']);
-                    // block if any overlap
                     if ($current < $b_end && $current_end > $b_start) {
                         $overlap = true;
                         break;
@@ -115,11 +113,10 @@ foreach ($available_slots as $date => $slots) {
                 ];
             }
 
-            $current += 15 * 60; // increment 15 minutes
+            $current += 15 * 60;
         }
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -149,10 +146,8 @@ tailwind.config = { theme: { extend: { fontFamily: { poppins: ['Poppins', 'sans-
                     <h3 class="font-semibold"><?= htmlspecialchars($details['package_name'] ?? $details['service_name']) ?></h3>
                     <p class="text-gray-600 text-sm"><?= ucfirst($item['type']) ?></p>
                     <p class="font-semibold mt-1">₱<?= number_format($details['price'], 2) ?></p>
-                    <?php if (!empty($details['duration_minutes']) && $details['duration_minutes'] > 0): ?>
-                        <p class="flex items-center gap-2 text-gray-700 mt-1 text-sm">
-                            Duration: <span class="font-semibold"><?= (int)$details['duration_minutes'] ?> minutes</span>
-                        </p>
+                    <?php if (!empty($details['duration_minutes'])): ?>
+                        <p class="text-sm mt-1">Duration: <span class="font-semibold"><?= (int)$details['duration_minutes'] ?> minutes</span></p>
                     <?php endif; ?>
                 </div>
                 <a href="remove_cart.php?index=<?= $index ?>" class="text-red-600 font-semibold">Remove</a>
@@ -163,6 +158,29 @@ tailwind.config = { theme: { extend: { fontFamily: { poppins: ['Poppins', 'sans-
     <?php endif; ?>
 </div>
 
+
+<?php if (isset($_SESSION['booking_error'])): ?>
+<div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center">
+        <h3 class="text-xl font-bold text-red-600 mb-4"></h3>
+        <p class="text-gray-700 mb-6">
+            <?= htmlspecialchars($_SESSION['booking_error']) ?>
+        </p>
+        <button onclick="closeModal()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded">
+            OK
+        </button>
+    </div>
+</div>
+
+<script>
+function closeModal() {
+    document.getElementById('errorModal').remove();
+}
+</script>
+
+<?php unset($_SESSION['booking_error']); ?>
+<?php endif; ?>
+
 <!-- ================= BOOKING ================= -->
 <form method="POST" action="confirm.php" class="bg-white shadow rounded-lg p-6 flex flex-col gap-5">
 <h2 class="text-2xl font-bold border-b pb-2 text-center">Appointment Summary</h2>
@@ -170,40 +188,43 @@ tailwind.config = { theme: { extend: { fontFamily: { poppins: ['Poppins', 'sans-
 <div>
     <div class="flex justify-between"><span>Subtotal</span><span>₱<?= number_format($subtotal,2) ?></span></div>
     <?php if ($discount > 0): ?>
-        <div class="flex justify-between text-yellow-600"><span>Discount (<?= $category ?>)</span><span>-₱<?= number_format($discount,2) ?></span></div>
+        <div class="flex justify-between text-yellow-600">
+            <span>Discount (<?= $category ?>)</span>
+            <span>-₱<?= number_format($discount,2) ?></span>
+        </div>
     <?php endif; ?>
-    <div class="flex justify-between"><span>Booking Fee</span><span>₱<?= number_format($booking_fee,2) ?></span></div>
-    <div class="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span>₱<?= number_format($total,2) ?></span></div>
-    <div class="flex justify-between mt-2"><span>Duration Time:</span>
-        <span class="font-semibold text-red-600"><?= $hours>0 ? "$hours hour".($hours>1?"s":"") : "" ?> <?= $minutes>0 ? "$minutes minutes" : "" ?></span>
+    <div class="flex justify-between font-bold text-lg border-t pt-2">
+        <span>Total</span>
+        <span>₱<?= number_format($total,2) ?></span>
+    </div>
+    <div class="flex justify-between mt-2">
+        <span>Duration Time:</span>
+        <span class="font-semibold text-red-600">
+            <?= $hours>0 ? "$hours hour".($hours>1?"s":"") : "" ?>
+            <?= $minutes>0 ? "$minutes minutes" : "" ?>
+        </span>
     </div>
 </div>
 
-<!-- ================= AVAILABILITY ================= -->
 <div class="space-y-4">
-    <div>
-        <label class="font-semibold block mb-1">Available Appointment Dates</label>
-        <select name="appointment_date" id="appointment_date" class="w-full border rounded px-3 py-2" required onchange="updateTimes()">
-            <option value="">-- Select Date --</option>
-            <?php foreach ($available_times as $date => $times): ?>
-                <option value="<?= $date ?>"><?= date('F d, Y', strtotime($date)) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
+    <label class="font-semibold">Available Appointment Dates</label>
+    <select name="appointment_date" id="appointment_date" class="w-full border rounded px-3 py-2" required onchange="updateTimes()">
+        <option value="">-- Select Date --</option>
+        <?php foreach ($available_times as $date => $times): ?>
+            <option value="<?= $date ?>"><?= date('F d, Y', strtotime($date)) ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <div>
-        <label class="font-semibold block mb-1 mt-4">Available Time</label>
-        <select name="appointment_time" id="appointment_time" class="w-full border rounded px-3 py-2" required>
-            <option value="">-- Select Time --</option>
-        </select>
-        <p class="text-gray-700 mt-2">Estimated end time: <?= $hours>0 ? "$hours hour".($hours>1?"s":"") : "" ?> <?= $minutes>0 ? "$minutes minutes" : "" ?></p>
-    </div>
+    <label class="font-semibold">Available Time</label>
+    <select name="appointment_time" id="appointment_time" class="w-full border rounded px-3 py-2" required>
+        <option value="">-- Select Time --</option>
+    </select>
 
     <?php foreach ($_SESSION['cart'] as $item): ?>
         <input type="hidden" name="cart_items[]" value="<?= $item['type'] . ':' . $item['id'] ?>">
     <?php endforeach; ?>
 
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded mt-auto w-full">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded w-full">
         Confirm Booking
     </button>
 </div>
@@ -216,26 +237,13 @@ tailwind.config = { theme: { extend: { fontFamily: { poppins: ['Poppins', 'sans-
 const availableTimes = <?= json_encode($available_times); ?>;
 
 function updateTimes() {
-    const dateSelect = document.getElementById('appointment_date');
-    const timeSelect = document.getElementById('appointment_time');
-    const date = dateSelect.value;
-
-    timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
-    if (!date || !availableTimes[date]) return;
-
+    const date = appointment_date.value;
+    appointment_time.innerHTML = '<option value="">-- Select Time --</option>';
+    if (!availableTimes[date]) return;
     availableTimes[date].forEach(t => {
-        const option = document.createElement('option');
-        option.value = t.value;
-        option.textContent = t.text;
-        timeSelect.appendChild(option);
+        appointment_time.innerHTML += `<option value="${t.value}">${t.text}</option>`;
     });
 }
-
-// Initialize first date if exists
-document.addEventListener('DOMContentLoaded', () => {
-    const firstDate = document.getElementById('appointment_date').value;
-    if (firstDate) updateTimes();
-});
 </script>
 </body>
 </html>

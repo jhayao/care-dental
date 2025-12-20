@@ -98,7 +98,7 @@ $staffMessage = "
 
 sendEmail($user_email, 'Approved Booking', $customerMessage);
 // sendEmail($staff['email'], 'Customer Booking', $staffMessage);
-sendEmail('tare.kristian@gmail.com', 'Admin Notification', $staffMessage);
+sendEmail($admin['email'], 'Admin Notification', $staffMessage);
 
 /* ---------------- REDIRECT ---------------- */
 header("Location: appointments.php?success=Payment+Success");
