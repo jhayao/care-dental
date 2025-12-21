@@ -113,7 +113,7 @@ Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf
 $invoiceApi = new InvoiceApi();
 
 $invoiceRequest = new CreateInvoiceRequest([
-    'external_id' => 'Booking_' . $booking_id,
+    'external_id' => 'B-Dental Booking_' . $booking_id,
     'amount' => (float)$totalAmount,
     'payer_email' => $email,
     'currency' => 'PHP',
