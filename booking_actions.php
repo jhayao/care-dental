@@ -131,7 +131,7 @@ if ($action === 'cancel') {
     /* ---------- UPDATE PAYMENT ---------- */
     $stmt = $conn->prepare("
         UPDATE payments 
-        SET status = 'refunded', refunded_at = NOW()
+        SET status = 'cancelled'
         WHERE id = ?
     ");
     $stmt->bind_param("i", $payment['id']);
