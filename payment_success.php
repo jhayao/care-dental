@@ -1,7 +1,8 @@
 <?php
+
+session_start();
 echo 'debugging error';
 exit;
-session_start();
 require_once 'db_connect.php';
 // require_once './phpmailer2.php';
 
