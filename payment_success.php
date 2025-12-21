@@ -3,10 +3,16 @@
 
 // print_r($conn);
 // exit;
-// require_once './phpmailer2.php';
+require_once './phpmailer2.php';
 
 // sendEmail('tare.kristian@gmail.com', 'Admin Notification', 'wow testing');
 
+
+$conn = mysqli_connect('localhost','root','StrongPass123','dentist_project');
+
+if(!$conn){
+    die('error connection');
+}
 
 
 
