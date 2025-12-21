@@ -1,9 +1,8 @@
 <?php
-
-session_start();
-echo 'debugging error';
-exit;
 require_once 'db_connect.php';
+
+print_r($conn);
+exit;
 // require_once './phpmailer2.php';
 
 // sendEmail('tare.kristian@gmail.com', 'Admin Notification', 'wow testing');
