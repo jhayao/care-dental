@@ -1,10 +1,11 @@
 <?php
 session_start();
 require_once 'db_connect.php';
-require_once './phpmailer2.php';
+// require_once './phpmailer2.php';
 
-sendEmail('tare.kristian@gmail.com', 'Admin Notification', 'wow testing');
+// sendEmail('tare.kristian@gmail.com', 'Admin Notification', 'wow testing');
 
+echo 'naa sa email ang error';
 
 exit;
 
