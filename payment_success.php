@@ -1,8 +1,8 @@
 <?php
 require_once 'db_connect.php';
 
-print_r($conn);
-exit;
+// print_r($conn);
+// exit;
 // require_once './phpmailer2.php';
 
 // sendEmail('tare.kristian@gmail.com', 'Admin Notification', 'wow testing');
@@ -25,8 +25,8 @@ $sql = "
     WHERE b.id = $booking_id
 ";
 
-// echo $sql;
-// exit;
+echo $sql;
+exit;
 $result = mysqli_query($conn, $sql);
 if (!$result) {
     die("Query failed: " . mysqli_error($conn));
