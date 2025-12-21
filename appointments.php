@@ -202,8 +202,11 @@ function cancelBooking(bookingId) {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.status === 'success') location.reload();
+        if (data.status === 'success') {
+            window.location.href = `appointments.php?success=${encodeURIComponent(data.message)}`;
+        } else {
+            alert(data.message);
+        }
     });
 }
 
@@ -241,8 +244,11 @@ function saveReschedule() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
-        if (data.status === 'success') location.reload();
+        if (data.status === 'success') {
+            window.location.href = `appointments.php?success=${encodeURIComponent(data.message)}`;
+        } else {
+            alert(data.message);
+        }
     });
 }
 </script>
