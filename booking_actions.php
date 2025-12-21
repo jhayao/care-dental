@@ -83,7 +83,7 @@ if ($action === 'cancel') {
     }
 
     /* ---------- XENDIT REFUND ---------- */
-    $apiKey = 'xnd_production_XXXXXXXXXXXXXXXXXXXX'; // MOVE TO ENV
+    $apiKey = 'xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc'; // MOVE TO ENV
 
     $refundData = [
         'payment_request_id' => $xendit_payment_id,
