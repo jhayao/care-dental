@@ -121,7 +121,7 @@ if ($action === 'cancel') {
     /* ---------- UPDATE BOOKING ---------- */
     $stmt = $conn->prepare("
         UPDATE bookings 
-        SET status = 'cancelled'
+        SET status = 'cancelled', cancelled_at = NOW()
         WHERE id = ? AND user_id = ?
     ");
     $stmt->bind_param("ii", $booking_id, $user_id);
