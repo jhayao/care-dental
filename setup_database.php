@@ -11,7 +11,7 @@ $host     = "localhost";
 $username = "root";
 $password = "";
 $dbname   = "dentist"; // Target database name
-$sqlFile  = "dentist_project.sql";
+$sqlFile  = "script.sql";
 
 echo "<h1>Database Setup</h1>";
 
