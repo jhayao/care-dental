@@ -87,8 +87,8 @@ mysqli_stmt_close($stmt);
 /* ---------------- INSERT BOOKING (NO BOOKING FEE) ---------------- */
 $stmt = mysqli_prepare($conn, "
     INSERT INTO bookings
-    (user_id, appointment_date, appointment_time, duration_minutes, discount, total_amount, status)
-    VALUES (?, ?, ?, ?, ?, ?, 'pending')
+    (user_id, appointment_date, appointment_time, duration_minutes, discount, total_amount, status, booking_date)
+    VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())
 ");
 mysqli_stmt_bind_param(
     $stmt,

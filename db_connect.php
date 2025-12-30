@@ -2,7 +2,7 @@
 // Database configuration
 $host     = "localhost";   // e.g. "127.0.0.1"
 $username = "root";        // your DB username
-$password = "StrongPass123!";            // your DB password
+$password = "";            // your DB password
 $database = "dentist_project"; // your DB name
 
 // Create connection
