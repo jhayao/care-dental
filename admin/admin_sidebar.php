@@ -109,6 +109,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <span class="font-medium">Reports</span>
         </a>
 
+        <a href="payments.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-blue-800 group <?= $current_page == 'payments.php' ? 'bg-blue-700 shadow-inner' : '' ?>">
+            <i class="fas fa-money-bill-wave w-6 text-center mr-3 text-blue-300 group-hover:text-white transition-colors"></i>
+            <span class="font-medium">Payments</span>
+        </a>
+
         <a href="profile.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-blue-800 group <?= $current_page == 'profile.php' ? 'bg-blue-700 shadow-inner' : '' ?>">
             <i class="fas fa-user-cog w-6 text-center mr-3 text-blue-300 group-hover:text-white transition-colors"></i>
             <span class="font-medium">Profile</span>

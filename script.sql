@@ -1,6 +1,15 @@
+create or replace table booking_fees
+(
+    id          bigint unsigned auto_increment
+        primary key,
+    booking_fee decimal(10, 2)              not null,
+    status      enum ('Active', 'Inactive') not null,
+    created_at  timestamp                   null,
+    updated_at  timestamp                   null
+)
+    collate = utf8mb4_unicode_ci;
 
-
-create table booking_items
+create or replace table booking_items
 (
     id         bigint unsigned                       not null,
     booking_id bigint unsigned                       not null,
@@ -11,13 +20,90 @@ create table booking_items
 )
     collate = utf8mb4_unicode_ci;
 
+create or replace table cache
+(
+    `key`      varchar(255) not null
+        primary key,
+    value      mediumtext   not null,
+    expiration int          not null
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace table cache_locks
+(
+    `key`      varchar(255) not null
+        primary key,
+    owner      varchar(255) not null,
+    expiration int          not null
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace table failed_jobs
+(
+    id         bigint unsigned auto_increment
+        primary key,
+    uuid       varchar(255)                          not null,
+    connection text                                  not null,
+    queue      text                                  not null,
+    payload    longtext                              not null,
+    exception  longtext                              not null,
+    failed_at  timestamp default current_timestamp() not null,
+    constraint failed_jobs_uuid_unique
+        unique (uuid)
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace table job_batches
+(
+    id             varchar(255) not null
+        primary key,
+    name           varchar(255) not null,
+    total_jobs     int          not null,
+    pending_jobs   int          not null,
+    failed_jobs    int          not null,
+    failed_job_ids longtext     not null,
+    options        mediumtext   null,
+    cancelled_at   int          null,
+    created_at     int          not null,
+    finished_at    int          null
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace table jobs
+(
+    id           bigint unsigned auto_increment
+        primary key,
+    queue        varchar(255)     not null,
+    payload      longtext         not null,
+    attempts     tinyint unsigned not null,
+    reserved_at  int unsigned     null,
+    available_at int unsigned     not null,
+    created_at   int unsigned     not null
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace index jobs_queue_index
+    on jobs (queue);
 
-create table packages
+create or replace table medical_records
+(
+    id         bigint unsigned auto_increment
+        primary key,
+    created_at timestamp null,
+    updated_at timestamp null
+)
+    collate = utf8mb4_unicode_ci;
+
+create or replace table migrations
+(
+    id        int unsigned auto_increment
+        primary key,
+    migration varchar(255) not null,
+    batch     int          not null
+)
+    collate = utf8mb4_unicode_ci;
+
+create or replace table packages
 (
     id               bigint unsigned auto_increment
         primary key,
@@ -33,9 +119,16 @@ create table packages
 )
     collate = utf8mb4_unicode_ci;
 
+create or replace table password_reset_tokens
+(
+    email      varchar(255) not null
+        primary key,
+    token      varchar(255) not null,
+    created_at timestamp    null
+)
+    collate = utf8mb4_unicode_ci;
 
-
-create table services
+create or replace table services
 (
     id               bigint unsigned auto_increment
         primary key,
@@ -51,7 +144,7 @@ create table services
 )
     collate = utf8mb4_unicode_ci;
 
-create table package_items
+create or replace table package_items
 (
     id          bigint unsigned auto_increment
         primary key,
@@ -68,9 +161,25 @@ create table package_items
 )
     collate = utf8mb4_unicode_ci;
 
+create or replace table sessions
+(
+    id            varchar(255)    not null
+        primary key,
+    user_id       bigint unsigned null,
+    ip_address    varchar(45)     null,
+    user_agent    text            null,
+    payload       longtext        not null,
+    last_activity int             not null
+)
+    collate = utf8mb4_unicode_ci;
 
+create or replace index sessions_last_activity_index
+    on sessions (last_activity);
 
-create table staff
+create or replace index sessions_user_id_index
+    on sessions (user_id);
+
+create or replace table staff
 (
     id         bigint unsigned auto_increment
         primary key,
@@ -86,7 +195,7 @@ create table staff
 )
     collate = utf8mb4_unicode_ci;
 
-create table users
+create or replace table users
 (
     id                bigint unsigned auto_increment
         primary key,
@@ -111,7 +220,7 @@ create table users
 )
     collate = utf8mb4_unicode_ci;
 
-create table bookings
+create or replace table bookings
 (
     id               bigint unsigned auto_increment
         primary key,
@@ -135,7 +244,7 @@ create table bookings
 )
     collate = utf8mb4_unicode_ci;
 
-create table carts
+create or replace table carts
 (
     id         bigint unsigned auto_increment
         primary key,
@@ -148,7 +257,7 @@ create table carts
 )
     collate = utf8mb4_unicode_ci;
 
-create table cart_items
+create or replace table cart_items
 (
     id            bigint unsigned auto_increment
         primary key,
@@ -163,10 +272,10 @@ create table cart_items
 )
     collate = utf8mb4_unicode_ci;
 
-create index cart_items_itemable_type_itemable_id_index
+create or replace index cart_items_itemable_type_itemable_id_index
     on cart_items (itemable_type, itemable_id);
 
-create table dentist_calendar
+create or replace table dentist_calendar
 (
     id             int auto_increment
         primary key,
@@ -182,7 +291,7 @@ create table dentist_calendar
 )
     charset = utf8mb4;
 
-create table payments
+create or replace table payments
 (
     id                bigint unsigned auto_increment
         primary key,
@@ -200,5 +309,4 @@ create table payments
             on delete cascade
 )
     collate = utf8mb4_unicode_ci;
-
 

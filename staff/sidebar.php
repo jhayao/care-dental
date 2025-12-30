@@ -46,6 +46,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <span class="font-medium">Reports</span>
         </a>
 
+        <a href="payments.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-gray-700 group <?= ($current_page == 'payments.php') ? 'bg-gray-700 shadow-inner' : '' ?>">
+            <i class="fas fa-money-bill-wave w-6 text-center mr-3 text-gray-400 group-hover:text-white transition-colors"></i>
+            <span class="font-medium">Payments</span>
+        </a>
+
         <!-- Section: Clinical -->
         <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-6">Clinical</p>
 

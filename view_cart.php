@@ -7,12 +7,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-/* ================= USER CATEGORY ================= */
-$stmt = $conn->prepare("SELECT category FROM users WHERE id = ?");
+/* ================= USER CATEGORY & CHECK DISCOUNT ================= */
+$stmt = $conn->prepare("SELECT category, discount FROM users WHERE id = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $category = $user['category'] ?? 'None';
+$user_discount_percent = $user['discount'] ?? 0;
 $stmt->close();
 
 /* ================= CART INIT ================= */
@@ -46,7 +47,13 @@ foreach ($_SESSION['cart'] as $item) {
     }
 }
 
-$discount = ($category === 'Senior' || $category === 'PWD') ? $subtotal * 0.20 : 0;
+// Discount Logic: Priority to specific user discount % -> Then Senior/PWD standard 20%
+$discount = 0;
+if ($user_discount_percent > 0) {
+    $discount = $subtotal * ($user_discount_percent / 100);
+} elseif ($category === 'Senior' || $category === 'PWD') {
+    $discount = $subtotal * 0.20;
+}
 $total = $subtotal - $discount;
 
 // Ensure minimum duration of 30 mins to prevent logic errors

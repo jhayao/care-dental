@@ -48,15 +48,21 @@ foreach ($_SESSION['cart'] as $item) {
 }
 
 /* ---------------- GET USER INFO ---------------- */
-$stmt = mysqli_prepare($conn, "SELECT category, email FROM users WHERE id=?");
+$stmt = mysqli_prepare($conn, "SELECT category, email, discount FROM users WHERE id=?");
 mysqli_stmt_bind_param($stmt, "i", $_SESSION['user_id']);
 mysqli_stmt_execute($stmt);
-mysqli_stmt_bind_result($stmt, $category, $email);
+mysqli_stmt_bind_result($stmt, $category, $email, $user_discount_percent);
 if (!mysqli_stmt_fetch($stmt)) die("❌ User not found");
 mysqli_stmt_close($stmt);
 
 /* ---------------- DISCOUNT & TOTAL ---------------- */
-$discount = in_array($category, ['Senior','PWD']) ? $subtotal * 0.20 : 0;
+$discount = 0;
+// Note: $user_discount_percent comes from DB as decimal/int (e.g. 20.00)
+if ($user_discount_percent > 0) {
+    $discount = $subtotal * ($user_discount_percent / 100);
+} elseif (in_array($category, ['Senior','PWD'])) {
+    $discount = $subtotal * 0.20;
+}
 $totalAmount = $subtotal - $discount;
 
 /* ---------------- OVERLAP CHECK ---------------- */
