@@ -212,6 +212,7 @@ create or replace table users
     created_at        timestamp                                                null,
     updated_at        timestamp                                                null,
     gender            varchar(20)                                              null,
+    dob               date                                                     null,
     reference_no      varchar(50)                                              null,
     category          enum ('None', 'Senior', 'PWD')          default 'None'   not null,
     discount          decimal(5, 2)                           default 0.00     not null,
@@ -224,20 +225,21 @@ create or replace table bookings
 (
     id               bigint unsigned auto_increment
         primary key,
-    user_id          bigint unsigned                                                                       not null,
-    staff_id         int                                                                                   null,
-    booking_date     date                                                                                  not null,
-    time_slot        time                                                                                  not null,
-    status           enum ('pending', 'confirmed', 'cancelled', 'rescheduled') default 'pending'           not null,
-    created_at       datetime                                                  default current_timestamp() not null,
-    updated_at       datetime                                                  default current_timestamp() not null on update current_timestamp(),
-    booking_fee      decimal(10, 2)                                            default 50.00               not null,
-    discount         decimal(10, 2)                                            default 0.00                null,
-    total_amount     decimal(10, 2)                                            default 0.00                null,
-    cancelled_at     datetime                                                                              null,
-    appointment_date date                                                      default curdate()           not null,
-    appointment_time time                                                      default '09:00:00'          not null,
-    duration_minutes int                                                       default 60                  not null,
+    user_id          bigint unsigned                                                                                   not null,
+    staff_id         int                                                                                               null,
+    booking_date     date                                                                                              not null,
+    time_slot        time                                                                                              not null,
+    status           enum ('pending', 'confirmed', 'cancelled', 'rescheduled', 'refunded') default 'pending'           null,
+    created_at       datetime                                                              default current_timestamp() not null,
+    updated_at       datetime                                                              default current_timestamp() not null on update current_timestamp(),
+    booking_fee      decimal(10, 2)                                                        default 50.00               not null,
+    discount         decimal(10, 2)                                                        default 0.00                null,
+    total_amount     decimal(10, 2)                                                        default 0.00                null,
+    cancelled_at     datetime                                                                                          null,
+    appointment_date date                                                                  default curdate()           not null,
+    appointment_time time                                                                  default '09:00:00'          not null,
+    duration_minutes int                                                                   default 60                  not null,
+    reminder_sent    tinyint(1)                                                            default 0                   null,
     constraint bookings_user_id_foreign
         foreign key (user_id) references users (id)
             on delete cascade
@@ -295,15 +297,15 @@ create or replace table payments
 (
     id                bigint unsigned auto_increment
         primary key,
-    booking_id        bigint unsigned                                                                   not null,
-    total_price       decimal(10, 2)                                                                    not null,
-    payment_method    varchar(255)                                                                      not null,
-    status            enum ('pending', 'approved', 'declined', 'cancelled') default 'pending'           not null,
-    xendit_invoice_id varchar(255)                                                                      not null,
-    xendit_payment_id varchar(255)                                                                      null,
-    payment_date      timestamp                                             default current_timestamp() not null on update current_timestamp(),
-    created_at        timestamp                                                                         null,
-    updated_at        timestamp                                                                         null,
+    booking_id        bigint unsigned                                                                               not null,
+    total_price       decimal(10, 2)                                                                                not null,
+    payment_method    varchar(255)                                                                                  not null,
+    status            enum ('pending', 'approved', 'declined', 'cancelled', 'refunded') default 'pending'           null,
+    xendit_invoice_id varchar(255)                                                                                  not null,
+    xendit_payment_id varchar(255)                                                                                  null,
+    payment_date      timestamp                                                         default current_timestamp() not null on update current_timestamp(),
+    created_at        timestamp                                                                                     null,
+    updated_at        timestamp                                                                                     null,
     constraint payments_booking_id_foreign
         foreign key (booking_id) references bookings (id)
             on delete cascade

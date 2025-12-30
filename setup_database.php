@@ -24,9 +24,10 @@ try {
     echo "<p>Connected to MySQL server successfully.</p>";
 
     // 2. Create Database
-    $sql = "CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+    $conn->query("DROP DATABASE IF EXISTS `$dbname`");
+    $sql = "CREATE DATABASE `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
     $conn->query($sql);
-    echo "<p>Database '<strong>$dbname</strong>' created or already exists.</p>";
+    echo "<p>Database '<strong>$dbname</strong>' created successfully.</p>";
 
     // 3. Select Database
     $conn->select_db($dbname);
