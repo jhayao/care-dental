@@ -32,7 +32,7 @@ $result = $conn->query("SELECT * FROM packages ORDER BY created_at DESC");
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Packages</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
+<link href="../assets/css/main.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -40,10 +40,6 @@ $result = $conn->query("SELECT * FROM packages ORDER BY created_at DESC");
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 
 <script>
-tailwind.config = {
-    theme: { extend: { fontFamily: { poppins: ['Poppins', 'sans-serif'] } } }
-}
-
 $(document).ready(function() {
     $('#packagesTable').DataTable();
 

@@ -32,7 +32,7 @@ $stmt->close();
 <head>
 <meta charset="UTF-8">
 <title>Manage Bookings</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link href="../assets/css/main.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -40,12 +40,6 @@ $stmt->close();
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script>
-tailwind.config = {
-    theme: {
-        extend: { fontFamily: { poppins: ['Poppins', 'sans-serif'] } }
-    }
-};
-
 $(document).ready(function() {
     $('#appointmentsTable').DataTable({
         pageLength: 10,

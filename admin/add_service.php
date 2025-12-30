@@ -15,18 +15,8 @@ if (!isset($_SESSION['user_id'])) {
 <title>Admin - Add Service</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-    theme: {
-        extend: {
-            fontFamily: {
-                poppins: ['Poppins', 'sans-serif'],
-            }
-        }
-    }
-}
-</script>
+<link href="../assets/css/main.css" rel="stylesheet">
+
 </head>
 <body class="bg-gray-50 font-poppins min-h-screen flex">
 

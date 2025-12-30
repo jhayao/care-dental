@@ -36,7 +36,7 @@ if (!$staff) {
 <head>
 <meta charset="UTF-8">
 <title>Edit Staff</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link href="../assets/css/main.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 font-sans min-h-screen flex">
 

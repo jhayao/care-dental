@@ -40,18 +40,8 @@ $stmt->close();
 <meta charset="UTF-8">
 <title>Staff List</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          poppins: ['Poppins', 'sans-serif'],
-        }
-      }
-    }
-  }
-</script>
+<link href="../assets/css/main.css" rel="stylesheet">
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

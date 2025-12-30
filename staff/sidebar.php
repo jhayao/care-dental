@@ -5,7 +5,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
 <!-- Tailwind CSS (Ensure available if not present in parent) -->
-<script src="https://cdn.tailwindcss.com"></script>
+<link href="../assets/css/main.css" rel="stylesheet">
 <!-- FontAwesome -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <!-- Google Fonts -->

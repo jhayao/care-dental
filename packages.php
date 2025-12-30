@@ -19,7 +19,7 @@ if (isset($_SESSION['flash_message'])) {
     <title>Packages - B-Dental Care</title>
 
     <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="./assets/css/main.css" rel="stylesheet">
 
     <!-- Bootstrap (for badge) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -28,15 +28,7 @@ if (isset($_SESSION['flash_message'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { poppins: ['Poppins', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
+
 </head>
 
 <body class="bg-gray-50 font-poppins min-h-screen flex flex-col">
