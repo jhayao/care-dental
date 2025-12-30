@@ -16,15 +16,18 @@ $sql = "
         p.total_price, 
         p.payment_method, 
         p.status,
-        b.id AS booking_id, 
+        p.booking_id, 
         u.first_name, 
         u.last_name
     FROM payments p
-    JOIN bookings b ON p.booking_id = b.id
-    JOIN users u ON b.user_id = u.id
+    LEFT JOIN bookings b ON p.booking_id = b.id
+    LEFT JOIN users u ON b.user_id = u.id
     ORDER BY p.payment_date DESC
 ";
-$result = $conn->query($sql);
+$payments_result = $conn->query($sql);
+if (!$payments_result) {
+    die("Query Failed: " . $conn->error);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,12 +71,12 @@ $result = $conn->query($sql);
                         </tr>
                     </thead>
                     <tbody class="text-gray-600 text-sm font-light">
-                        <?php if ($result && $result->num_rows > 0): ?>
-                            <?php while ($row = $result->fetch_assoc()): ?>
+                        <?php if ($payments_result && $payments_result->num_rows > 0): ?>
+                            <?php while ($row = $payments_result->fetch_assoc()): ?>
                                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                                     <td class="py-3 px-4 font-medium text-gray-800">#<?= $row['id'] ?></td>
                                     <td class="py-3 px-4"><?= date('M d, Y h:i A', strtotime($row['payment_date'])) ?></td>
-                                    <td class="py-3 px-4 font-medium"><?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                                    <td class="py-3 px-4 font-medium"><?= htmlspecialchars(($row['first_name'] ?? 'Unknown') . ' ' . ($row['last_name'] ?? '')) ?></td>
                                     <td class="py-3 px-4"><span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs font-semibold">#<?= $row['booking_id'] ?></span></td>
                                     <td class="py-3 px-4 font-bold text-green-600">₱<?= number_format($row['total_price'], 2) ?></td>
                                     <td class="py-3 px-4"><?= htmlspecialchars($row['payment_method']) ?></td>
