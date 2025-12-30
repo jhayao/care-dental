@@ -9,7 +9,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 
-$stmt = $conn->prepare("
+
+// Filter logic removed - Showing all including Archived by default
+$query = "
     SELECT 
         id,
         first_name,
@@ -18,11 +20,17 @@ $stmt = $conn->prepare("
         email,
         gender,
         status_,
+        category,
         created_at
     FROM users
     WHERE user_type = 'patient'
-    ORDER BY last_name ASC, first_name ASC
-");
+";
+
+// Removed exclusion of 'Archived'
+
+$query .= " ORDER BY last_name ASC, first_name ASC";
+
+$stmt = $conn->prepare($query);
 $stmt->execute();
 $patients = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -54,7 +62,10 @@ $stmt->close();
 <?php include 'admin_sidebar.php'; ?>
 
 <div class="flex-1 p-8">
-    <h1 class="text-2xl font-bold mb-6 text-center">Patients List</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-center">Patients List</h1>
+        <!-- Filter Form Removed -->
+    </div>
 
     <div class="overflow-x-auto bg-white shadow-lg rounded-lg p-4">
         <table id="patientsTable" class="w-full text-sm border-collapse border border-gray-200">
@@ -65,6 +76,7 @@ $stmt->close();
                     <th class="border px-4 py-2">Address</th>
                     <th class="border px-4 py-2">Email</th>
                     <th class="border px-4 py-2">Gender</th>
+                    <th class="border px-4 py-2">Category</th>
                     <th class="border px-4 py-2">Status</th>
                     <th class="border px-4 py-2">Created At</th>
                     <th class="border px-4 py-2">Actions</th>
@@ -78,7 +90,19 @@ $stmt->close();
                         <td class="border px-4 py-2"><?= htmlspecialchars($p['address_']); ?></td>
                         <td class="border px-4 py-2"><?= htmlspecialchars($p['email']); ?></td>
                         <td class="border px-4 py-2"><?= htmlspecialchars($p['gender']); ?></td>
-                       <td class="border px-4 py-2">
+                        <td class="border px-4 py-2">
+                             <?php
+                                $cat = $p['category'] ?? 'None';
+                                $badgeClass = 'bg-gray-100 text-gray-600';
+                                if ($cat === 'Senior') {
+                                    $badgeClass = 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+                                } elseif ($cat === 'PWD') {
+                                    $badgeClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+                                }
+                             ?>
+                             <span class="px-2 py-1 rounded text-xs font-semibold <?= $badgeClass ?>"><?= $cat ?></span>
+                        </td>
+                        <td class="border px-4 py-2">
                             <?php if($p['status_'] == 'Active'): ?>
                                 <span class="text-green-600 font-semibold flex items-center">
                                     <i class="fas fa-circle text-green-500 mr-1 text-xs"></i> Active
@@ -110,6 +134,12 @@ $stmt->close();
                                 data-status="<?= $p['status_']; ?>">
                                 <i class="fas fa-pen"></i> Edit
                             </button>
+                            <?php if($p['status_'] !== 'Archived'): ?>
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 archive-btn"
+                                onclick="archiveUser(<?= $p['id']; ?>)">
+                                <i class="fas fa-archive"></i> Archive
+                            </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -171,6 +201,31 @@ $stmt->close();
     </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
+        <div class="mb-4">
+            <i class="fas fa-question-circle text-blue-500 text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Confirm Action</h3>
+        <p class="text-gray-600 mb-6" id="confirmMessage">Are you sure?</p>
+        <div class="flex justify-center gap-3">
+            <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancel</button>
+            <button id="confirmBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Alert Modal -->
+<div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
+        <div class="mb-4" id="alertIcon"></div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2" id="alertTitle">Notification</h3>
+        <p class="text-gray-600 mb-6" id="alertMessage"></p>
+        <button onclick="closeAlertModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">OK</button>
+    </div>
+</div>
+
 <script>
 $(document).ready(function () {
     $('#patientsTable').DataTable({
@@ -178,7 +233,6 @@ $(document).ready(function () {
         lengthMenu: [5, 10, 25, 50],
         responsive: true
     });
-
   
     $('.edit-btn').click(function () {
         $('#editPatientId').val($(this).data('id'));
@@ -191,11 +245,82 @@ $(document).ready(function () {
         $('#editPatientModal').removeClass('hidden').addClass('flex');
     });
 
-
     $('#closeEditPatientModal').click(function () {
         $('#editPatientModal').removeClass('flex').addClass('hidden');
     });
 });
+
+// Modal Logic
+const confirmModal = document.getElementById('confirmModal');
+const alertModal = document.getElementById('alertModal');
+let confirmCallback = null;
+
+function showConfirmModal(message, callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    confirmCallback = callback;
+    confirmModal.classList.remove('hidden');
+    confirmModal.classList.add('flex');
+}
+
+function closeConfirmModal() {
+    confirmModal.classList.add('hidden');
+    confirmModal.classList.remove('flex');
+    confirmCallback = null;
+}
+
+document.getElementById('confirmBtn').addEventListener('click', function() {
+    if (confirmCallback) confirmCallback();
+    closeConfirmModal();
+});
+
+function showAlert(message, type = 'info') {
+    const titleEl = document.getElementById('alertTitle');
+    const msgEl = document.getElementById('alertMessage');
+    const iconEl = document.getElementById('alertIcon');
+
+    msgEl.textContent = message;
+    
+    if (type === 'success') {
+        titleEl.textContent = 'Success';
+        iconEl.innerHTML = '<i class="fas fa-check-circle text-green-500 text-4xl"></i>';
+    } else if (type === 'error') {
+            titleEl.textContent = 'Error';
+            iconEl.innerHTML = '<i class="fas fa-times-circle text-red-500 text-4xl"></i>';
+    } else {
+            titleEl.textContent = 'Notification';
+            iconEl.innerHTML = '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>';
+    }
+
+    alertModal.classList.remove('hidden');
+    alertModal.classList.add('flex');
+}
+function closeAlertModal() { 
+    alertModal.classList.add('hidden'); 
+    alertModal.classList.remove('flex'); 
+}
+
+
+function updateUserStatus(id, action) {
+    const actionText = action === 'archive' ? 'archive' : 'unarchive';
+    showConfirmModal(`Are you sure you want to ${actionText} this user?`, function() {
+        fetch('archive_user_action.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id + '&action=' + action
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                showAlert(`User ${actionText}d successfully`, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(err => console.error(err));
+    });
+}
+function archiveUser(id) { updateUserStatus(id, 'archive'); } // Backward compatibility just in case
 </script>
 
 </body>

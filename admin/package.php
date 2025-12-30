@@ -60,9 +60,9 @@ $stmt->close();
         <h1 class="text-2xl font-bold flex items-center">
             <i class="fas fa-boxes mr-2 text-blue-600"></i> Packages List
         </h1>
-        <button id="openAddPackageModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
+        <a href="create_package.php" id="openAddPackageBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
     <i class="fas fa-plus mr-2"></i> Add Package
-</button>
+</a>
 
     </div>
 
@@ -118,7 +118,7 @@ $stmt->close();
                     </span>
                 <?php endif; ?>
             </td>
-            <td class="border px-4 py-2">$<?= number_format($p['price'], 2); ?></td>
+            <td class="border px-4 py-2">₱<?= number_format($p['price'], 2); ?></td>
             <td class="border px-4 py-2"><?= intval($p['duration_minutes']); ?> Minutes</td>
             <td class="border px-4 py-2 flex justify-center gap-2">
                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1 edit-btn"
@@ -146,73 +146,7 @@ $stmt->close();
 </div>
 
 
-<div id="addPackageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white rounded-lg w-1/3 p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Add Package</h2>
 
-        <form id="addPackageForm" action="add_package.php" method="POST">
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Package Name</label>
-                <input type="text" name="package_name"
-                       class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Description</label>
-                <textarea name="description"
-                          class="w-full border px-3 py-2 rounded" required></textarea>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Inclusions (comma-separated)</label>
-                <input type="text" name="inclusions"
-                       class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Status</label>
-                <select name="status"
-                        class="w-full border px-3 py-2 rounded" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Price</label>
-                <input type="number" step="0.01" name="price"
-                       class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <!-- ✅ DURATION MINUTES -->
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Duration (minutes)</label>
-                <input type="number"
-                       name="duration_minutes"
-                       id="duration_minutes"
-                       min="1"
-                       required
-                       oninput="updateDurationPreview()"
-                       class="w-full border px-3 py-2 rounded">
-                <p id="durationPreview" class="text-sm text-gray-500 mt-1"></p>
-            </div>
-
-            <div class="flex justify-end gap-2">
-                <button type="button" id="closeAddPackageModal"
-                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Save
-                </button>
-            </div>
-
-        </form>
-    </div>
-</div>
 
 
 <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
@@ -329,17 +263,7 @@ $(document).ready(function(){
         $('#successModal').removeClass('flex').addClass('hidden');
     });
 });
-$(document).ready(function(){
-   
-    $('#openAddPackageModal').click(function(){
-        $('#addPackageModal').removeClass('hidden').addClass('flex');
-    });
 
-  
-    $('#closeAddPackageModal').click(function(){
-        $('#addPackageModal').removeClass('flex').addClass('hidden');
-    });
-});
 
 $('.delete-btn').click(function(){
     const id = $(this).data('id');

@@ -12,42 +12,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address_ = trim($_POST['address_']);
     $email = trim($_POST['email']);
     $pword = trim($_POST['pword']);
+    $dob = $_POST['dob'] ?? '';
     $gender = $_POST['gender'] ?? '';
-    $category = $_POST['category'] ?? 'None'; 
+    // Category is now derived or PWD
+    $category_input = $_POST['category'] ?? 'None'; 
+    $category = 'None'; // Default
+
     $discount = 0;
     $user_type = "patient";
     $status_ = "Active";
+    $fileName = null; // Initialize fileName
 
     // Validate required fields
     if ($first_name === '' || $last_name === '' || $address_ === '' ||
-        $email === '' || $pword === '' || $gender === '' || $category === '') {
+        $email === '' || $pword === '' || $gender === '' || $dob === '') {
         $error = "All fields are required.";
     } else {
+        // Calculate Age & Determine Category
+        $birthDate = new DateTime($dob);
+        $today = new DateTime();
+        $age = $today->diff($birthDate)->y;
+
+        if ($age >= 60) {
+            $category = 'Senior';
+        } else {
+            if ($category_input === 'PWD') {
+                $category = 'PWD';
+            } else {
+                $category = 'None';
+            }
+        }
 
         // Discount logic
         if ($category === 'Senior' || $category === 'PWD') {
             $discount = 20;
 
-            // Validate file upload
-            if (!isset($_FILES['proof']) || $_FILES['proof']['error'] != 0) {
-                $error = "Please upload a valid ID as proof for your category.";
-            } else {
-                $proofFile = $_FILES['proof'];
-                $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-                if (!in_array($proofFile['type'], $allowedTypes)) {
-                    $error = "Only JPG, PNG, or PDF files are allowed for proof.";
+            // Validate file upload (Only if PWD or Senior needs proof? Usually Seniors use ID too)
+            // But if auto-assigned Senior, do we strictly require upload here? 
+            // The prompt didn't say to remove proof, so I'll keep it logic-wise, 
+            // but if Age >= 60, they might not have clicked "Senior" to see the upload.
+            // Let's assume for now we still want proof for discount eligibility.
+            // If automated, we might need to show the proof field dynamically.
+            // Simpler approach: If Age >= 60, we act like they are Senior. 
+            // The prompt didn't mention proof removal. I will require proof if discount is applied.
+            
+            // Wait, if it's automatic, the user might not know to upload proof. 
+            // I'll make the frontend show the proof field if age is entered as >= 60.
+            
+            if ($category === 'PWD' || $category === 'Senior') {
+                 if (!isset($_FILES['proof']) || $_FILES['proof']['error'] != 0) {
+                    // For automated senior, maybe we don't block them? 
+                    // Or we just ask for specific ID? 
+                    // I will strictly require proof for DISCOUNTED users to prevent abuse, 
+                    // relying on frontend JS to show the field.
+                    $error = "Please upload a valid ID as proof for your category (Senior/PWD).";
                 } else {
-                    // Generate unique file name
-                    $fileName = uniqid() . '_' . basename($proofFile['name']);
-                    $uploadDir = 'uploads/proofs/';
-                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-                    $uploadPath = $uploadDir . $fileName;
-
-                    if (!move_uploaded_file($proofFile['tmp_name'], $uploadPath)) {
-                        $error = "Failed to upload proof file.";
+                     $proofFile = $_FILES['proof'];
+                    $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                    if (!in_array($proofFile['type'], $allowedTypes)) {
+                        $error = "Only JPG, PNG, or PDF files are allowed for proof.";
+                    } else {
+                        // Generate unique file name
+                        $fileName = uniqid() . '_' . basename($proofFile['name']);
+                        $uploadDir = 'uploads/proofs/';
+                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                        $uploadPath = $uploadDir . $fileName;
+    
+                        if (!move_uploaded_file($proofFile['tmp_name'], $uploadPath)) {
+                            $error = "Failed to upload proof file.";
+                        }
                     }
                 }
             }
+        } else {
+            // No discount, no proof needed
+             $fileName = null; // Ensure variable exists
         }
 
         // Continue registration if no errors
@@ -60,22 +99,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($res->num_rows > 0) {
                 $error = "This email is already registered.";
             } else {
+                // ADD dob to insert
                 $stmt = $conn->prepare("
                     INSERT INTO users 
-                    (first_name, last_name, address_, email, pword, gender, category, discount, user_type, status_, proof_file, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    (first_name, last_name, address_, email, pword, gender, dob, category, discount, user_type, status_, proof_file, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
                 ");
 
                 $hashed = password_hash($pword, PASSWORD_DEFAULT);
 
                 $stmt->bind_param(
-                    "sssssssssss",
+                    "ssssssssdsss",
                     $first_name,
                     $last_name,
                     $address_,
                     $email,
                     $hashed,
                     $gender,
+                    $dob, // NEW
                     $category,
                     $discount,
                     $user_type,
@@ -139,6 +180,11 @@ tailwind.config = {
                 </div>
 
                 <div>
+                    <label class="text-sm text-gray-600">Date of Birth</label>
+                    <input type="date" name="dob" id="dob" required onchange="checkAge()" class="w-full mt-1 p-2 border rounded-md">
+                </div>
+
+                <div>
                     <label class="text-sm text-gray-600">Gender</label>
                     <select name="gender" required class="w-full mt-1 p-2 border rounded-md">
                         <option value="">Select Gender</option>
@@ -150,24 +196,26 @@ tailwind.config = {
 
                 <div>
                     <label class="text-sm text-gray-600 mb-1 block">Category</label>
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-center">
                         <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="None" checked onclick="toggleProof(false)">
+                            <input type="radio" name="category" value="None" checked onclick="toggleProof(false)" id="catNone">
                             None
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="Senior" onclick="toggleProof(true)">
-                            Senior
-                        </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="PWD" onclick="toggleProof(true)">
+                        
+                        <!-- Senior Badge (Auto) -->
+                        <span id="seniorBadge" class="hidden bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-yellow-200">
+                            Senior Citizen (Auto-applied)
+                        </span>
+
+                        <label class="flex items-center gap-2" id="pwdOption">
+                            <input type="radio" name="category" value="PWD" onclick="toggleProof(true)" id="catPWD">
                             PWD
                         </label>
                     </div>
                 </div>
 
                 <div id="proofDiv" class="hidden">
-                    <label class="text-sm text-gray-600">Upload ID Proof</label>
+                    <label class="text-sm text-gray-600" id="proofLabel">Upload ID Proof</label>
                     <input type="file" name="proof" accept=".jpg,.jpeg,.png,.pdf" class="w-full mt-1 p-2 border rounded-md">
                     <p class="text-xs text-gray-500 mt-1">Accepted formats: JPG, PNG, PDF</p>
                 </div>
@@ -201,8 +249,57 @@ tailwind.config = {
 </div>
 
 <script>
-function toggleProof(show) {
-    document.getElementById('proofDiv').style.display = show ? 'block' : 'none';
+function checkAge() {
+    const dobInput = document.getElementById('dob').value;
+    if (!dobInput) return;
+
+    const dob = new Date(dobInput);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+
+    const seniorBadge = document.getElementById('seniorBadge');
+    const catNone = document.getElementById('catNone');
+    const catPWD = document.getElementById('catPWD');
+
+    if (age >= 60) {
+        // Senior
+        seniorBadge.classList.replace('hidden', 'inline-block');
+        
+        // Disable choices, imply Senior logic
+        catNone.checked = false;
+        catPWD.checked = false;
+        
+        catNone.disabled = true;
+        catPWD.disabled = true;
+        
+        // Show proof for Senior ID
+        toggleProof(true, 'Senior Citizen ID');
+    } else {
+        // Not Senior
+        seniorBadge.classList.replace('inline-block', 'hidden');
+        
+        catNone.disabled = false;
+        catPWD.disabled = false;
+        
+        if (!catPWD.checked) {
+             catNone.checked = true;
+             toggleProof(false);
+        } else {
+             toggleProof(true, 'PWD ID Proof');
+        }
+    }
+}
+
+function toggleProof(show, labelText = 'Upload ID Proof') {
+    const proofDiv = document.getElementById('proofDiv');
+    proofDiv.style.display = show ? 'block' : 'none';
+    if (show) {
+        document.getElementById('proofLabel').innerText = labelText;
+    }
 }
 </script>
 

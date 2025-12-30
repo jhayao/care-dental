@@ -9,7 +9,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 
-$stmt = $conn->prepare("
+// Filter Logic removed
+$query = "
     SELECT 
         id,
         first_name,
@@ -21,8 +22,13 @@ $stmt = $conn->prepare("
         created_at
     FROM users
     WHERE user_type = 'staff'
-    ORDER BY last_name ASC, first_name ASC
-");
+";
+
+// Removed exclusion of 'Archived'
+
+$query .= " ORDER BY last_name ASC, first_name ASC";
+
+$stmt = $conn->prepare($query);
 $stmt->execute();
 $staff = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -57,10 +63,13 @@ $stmt->close();
 
 <div class="flex-1 p-8">
     <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">
-        <i class="fa-solid fa-users mr-2 text-blue-600"></i>
-        Staff List
-    </h1>
+    <div class="flex items-center gap-4">
+        <h1 class="text-2xl font-bold">
+            <i class="fa-solid fa-users mr-2 text-blue-600"></i>
+            Staff List
+        </h1>
+        <!-- Filter Form Removed -->
+    </div>
     <button id="addStaffBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
         <i class="fa-solid fa-user-plus mr-2"></i>
         Add Staff
@@ -110,11 +119,20 @@ $stmt->close();
             </td>
                 <td class="border px-4 py-2"><?= date('M d, Y', strtotime($s['created_at'])); ?></td>
                 <td class="border px-4 py-2">
-                <div class="flex justify-center">
+                <div class="flex justify-center gap-2">
                     <a href="edit_staff.php?id=<?= $s['id']; ?>"
-                    class="bg-blue-800 text-white px-3 py-2 rounded hover:bg-blue-900 text-sm flex items-center gap-2">
+                    class="bg-blue-800 text-white px-3 py-1 rounded hover:bg-blue-900 text-sm flex items-center gap-1">
                         Edit
                     </a>
+                    <?php if($s['status_'] !== 'Archived'): ?>
+                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm" onclick="archiveStaff(<?= $s['id']; ?>)">
+                        <i class="fas fa-archive"></i> Archive
+                    </button>
+                    <?php else: ?>
+                    <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 text-sm" onclick="updateStaffStatus(<?= $s['id']; ?>, 'unarchive')">
+                        <i class="fas fa-undo"></i> Unarchive
+                    </button>
+                    <?php endif; ?>
                 </div>
             </td>
 
@@ -156,6 +174,31 @@ $stmt->close();
     </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
+        <div class="mb-4">
+            <i class="fas fa-question-circle text-blue-500 text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Confirm Action</h3>
+        <p class="text-gray-600 mb-6" id="confirmMessage">Are you sure?</p>
+        <div class="flex justify-center gap-3">
+            <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancel</button>
+            <button id="confirmBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Alert Modal -->
+<div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
+        <div class="mb-4" id="alertIcon"></div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2" id="alertTitle">Notification</h3>
+        <p class="text-gray-600 mb-6" id="alertMessage"></p>
+        <button onclick="closeAlertModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">OK</button>
+    </div>
+</div>
+
 <script>
 $(document).ready(function () {
     $('#staffTable').DataTable({
@@ -163,19 +206,16 @@ $(document).ready(function () {
         lengthMenu: [5, 10, 25, 50],
         responsive: true
     });
-
   
     $('#addStaffBtn').click(function () {
         $('#addStaffModal').removeClass('hidden').addClass('flex');
     });
-
 
     $('#closeModal').click(function () {
         $('#addStaffModal').removeClass('flex').addClass('hidden');
         $('#passwordError').addClass('hidden');
         $('#addStaffForm')[0].reset();
     });
-
 
     $('#addStaffForm').submit(function(e){
         const password = $('#password').val();
@@ -188,6 +228,77 @@ $(document).ready(function () {
         }
     });
 });
+
+// Modal Logic
+const confirmModal = document.getElementById('confirmModal');
+const alertModal = document.getElementById('alertModal');
+let confirmCallback = null;
+
+function showConfirmModal(message, callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    confirmCallback = callback;
+    confirmModal.classList.remove('hidden');
+    confirmModal.classList.add('flex');
+}
+
+function closeConfirmModal() {
+    confirmModal.classList.add('hidden');
+    confirmModal.classList.remove('flex');
+    confirmCallback = null;
+}
+
+document.getElementById('confirmBtn').addEventListener('click', function() {
+    if (confirmCallback) confirmCallback();
+    closeConfirmModal();
+});
+
+function showAlert(message, type = 'info') {
+    const titleEl = document.getElementById('alertTitle');
+    const msgEl = document.getElementById('alertMessage');
+    const iconEl = document.getElementById('alertIcon');
+
+    msgEl.textContent = message;
+    
+    if (type === 'success') {
+        titleEl.textContent = 'Success';
+        iconEl.innerHTML = '<i class="fas fa-check-circle text-green-500 text-4xl"></i>';
+    } else if (type === 'error') {
+            titleEl.textContent = 'Error';
+            iconEl.innerHTML = '<i class="fas fa-times-circle text-red-500 text-4xl"></i>';
+    } else {
+            titleEl.textContent = 'Notification';
+            iconEl.innerHTML = '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>';
+    }
+
+    alertModal.classList.remove('hidden');
+    alertModal.classList.add('flex');
+}
+function closeAlertModal() { 
+    alertModal.classList.add('hidden'); 
+    alertModal.classList.remove('flex'); 
+}
+
+function updateStaffStatus(id, action) {
+    const actionText = action === 'archive' ? 'archive' : 'unarchive';
+    showConfirmModal(`Are you sure you want to ${actionText} this staff member?`, function() {
+        fetch('archive_user_action.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + id + '&action=' + action
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                showAlert(`Staff ${actionText}d successfully`, 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showAlert('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(err => console.error(err));
+    });
+}
+function archiveStaff(id) { updateStaffStatus(id, 'archive'); } 
 </script>
 
 </body>

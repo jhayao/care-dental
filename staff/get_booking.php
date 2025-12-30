@@ -12,7 +12,7 @@ $bookingId = intval($_GET['id']);
 
 // Fetch booking info (without booking_fee)
 $stmt = $conn->prepare("
-    SELECT b.id, b.appointment_date, b.appointment_time, b.discount, b.total_amount, b.status,
+    SELECT b.id, b.appointment_date, b.appointment_time, b.discount, b.total_amount, b.status, b.cancelled_at,
            u.first_name, u.last_name, u.category
     FROM bookings b
     INNER JOIN users u ON u.id = b.user_id

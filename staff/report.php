@@ -28,11 +28,31 @@
 
     <!-- Scrollable Main content -->
     <main class="flex-1 p-8 overflow-y-auto h-screen">
-        <!-- Page Header -->
-        <div class="mb-8">
-            <h1 class="text-4xl font-bold">Patient Dashboard</h1>
-            <p class="text-gray-600 mt-2">Overview of patient statistics and charts</p>
-        </div>
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Patient Dashboard</h1>
+        <p class="text-gray-500 mt-1">Overview of patient statistics and charts</p>
+    </div>
+
+    <!-- Filter Section (Matches Reports Design) -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <form id="filterForm" class="flex flex-wrap gap-4 items-end" onsubmit="event.preventDefault(); loadDashboard();">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
+                <input type="date" id="startDate" class="border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
+                <input type="date" id="endDate" class="border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                Generate
+            </button>
+            <button type="button" onclick="clearFilters()" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
+                Clear
+            </button>
+        </form>
+    </div>
 
         <!-- Top Cards: Total Patients, None, Senior -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8" id="dashboardCards">
@@ -61,7 +81,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-fetch('get_patient_counts.php')
+let categoryChart = null;
+let genderChart = null;
+
+function loadDashboard() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    fetch(`get_patient_counts.php?start_date=${startDate}&end_date=${endDate}`)
     .then(res => res.json())
     .then(data => {
         // --- Top Dashboard Cards (Total, None, Senior) ---
@@ -124,7 +151,13 @@ fetch('get_patient_counts.php')
         }
 
         // --- Charts ---
-        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+        const ctxCat = document.getElementById('categoryChart').getContext('2d');
+        const ctxGen = document.getElementById('genderChart').getContext('2d');
+
+        if (categoryChart) categoryChart.destroy();
+        if (genderChart) genderChart.destroy();
+
+        categoryChart = new Chart(ctxCat, {
             type: 'pie',
             data: {
                 labels: Object.keys(data.categories),
@@ -137,7 +170,7 @@ fetch('get_patient_counts.php')
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
 
-        new Chart(document.getElementById('genderChart').getContext('2d'), {
+        genderChart = new Chart(ctxGen, {
             type: 'pie',
             data: {
                 labels: Object.keys(data.genders),
@@ -152,4 +185,14 @@ fetch('get_patient_counts.php')
 
     })
     .catch(err => console.error(err));
+}
+
+function clearFilters() {
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    loadDashboard();
+}
+
+// Initial Load
+loadDashboard();
 </script>

@@ -87,15 +87,16 @@ mysqli_stmt_close($stmt);
 /* ---------------- INSERT BOOKING (NO BOOKING FEE) ---------------- */
 $stmt = mysqli_prepare($conn, "
     INSERT INTO bookings
-    (user_id, appointment_date, appointment_time, duration_minutes, discount, total_amount, status, booking_date)
-    VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())
+    (user_id, appointment_date, appointment_time, time_slot, duration_minutes, discount, total_amount, status, booking_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
 ");
 mysqli_stmt_bind_param(
     $stmt,
-    "issidd",
+    "isssidd",
     $_SESSION['user_id'],  
     $appointment_date,     
-    $appointment_time,     
+    $appointment_time,
+    $appointment_time, // time_slot value     
     $total_minutes,        
     $discount,             
     $totalAmount           
@@ -108,8 +109,19 @@ if (!mysqli_stmt_execute($stmt)) {
 $booking_id = mysqli_insert_id($conn);
 mysqli_stmt_close($stmt);
 
+/* ---------------- INSERT BOOKING ITEMS ---------------- */
+$stmtItem = mysqli_prepare($conn, "INSERT INTO booking_items (booking_id, item_id, item_type) VALUES (?, ?, ?)");
+foreach ($_SESSION['cart'] as $item) {
+    mysqli_stmt_bind_param($stmtItem, "iis", $booking_id, $item['id'], $item['type']);
+    if (!mysqli_stmt_execute($stmtItem)) {
+         die("❌ Booking Item insert failed: " . mysqli_error($conn));
+    }
+}
+mysqli_stmt_close($stmtItem);
+
 /* ---------------- XENDIT INVOICE ---------------- */
-Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+// Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3');
 $invoiceApi = new InvoiceApi();
 
 $invoiceRequest = new CreateInvoiceRequest([
@@ -119,8 +131,8 @@ $invoiceRequest = new CreateInvoiceRequest([
     'currency' => 'PHP',
     'invoice_duration' => 86400,
     'description' => 'Payment for Booking #' . $booking_id,
-    'success_redirect_url' => 'http://localhost/care-dental/payment_success.php?id=' . $booking_id,
-    'failure_redirect_url' => 'http://localhost/care-dental/payment_fail.php?id=' . $booking_id,
+    'success_redirect_url' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/payment_success.php?id=' . $booking_id,
+    'failure_redirect_url' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/payment_fail.php?id=' . $booking_id,
     'payment_methods' => ['GCASH'],
 ]);
 

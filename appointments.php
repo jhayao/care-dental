@@ -99,7 +99,8 @@ tailwind.config = {
                     if ($booking['status'] == 'confirmed') echo 'bg-green-200 text-green-800';
                     elseif ($booking['status'] == 'pending') echo 'bg-yellow-200 text-yellow-800';
                     elseif ($booking['status'] == 'rescheduled') echo 'bg-blue-200 text-blue-800';
-                    else echo 'bg-red-200 text-red-800';
+                    elseif ($booking['status'] == 'refunded') echo 'bg-purple-200 text-purple-800'; // Purple for Refunded
+                    else echo 'bg-red-200 text-red-800'; // Red for Cancelled
                 ?>">
                 <?= htmlspecialchars($booking['status']) ?>
                 </span>
@@ -152,7 +153,7 @@ $end_time = $start_time + ($total_minutes * 60);
             <div class="flex gap-3 mt-4">
                 <?php 
                 $statusLower = strtolower($booking['status']); 
-                if ($statusLower !== 'cancelled'): ?>
+                if ($statusLower !== 'cancelled' && $statusLower !== 'refunded'): ?>
                     <button onclick="cancelBooking(<?= $booking['id'] ?>)" 
                         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                         Cancel
@@ -162,7 +163,8 @@ $end_time = $start_time + ($total_minutes * 60);
                         Reschedule
                     </button>
                 <?php else: ?>
-                    <p class="text-red-600 italic">Cancelled at: 
+                    <p class="<?= $statusLower === 'refunded' ? 'text-purple-600' : 'text-red-600' ?> italic">
+                        <?= $statusLower === 'refunded' ? 'Refunded' : 'Cancelled' ?> at: 
                         <?= isset($booking['cancelled_at']) ? date("M d, Y h:i A", strtotime($booking['cancelled_at'])) : 'N/A' ?>
                     </p>
                 <?php endif; ?>
@@ -193,7 +195,10 @@ $end_time = $start_time + ($total_minutes * 60);
 let currentBookingId = null;
 
 function cancelBooking(bookingId) {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+    if (!confirm("Are you sure you want to cancel this booking? Any payment made will be automatically refunded.")) return;
+
+    // Show loading
+    document.getElementById('loadingOverlay').classList.remove('hidden');
 
     fetch('booking_actions.php', {
         method: 'POST',
@@ -202,11 +207,19 @@ function cancelBooking(bookingId) {
     })
     .then(res => res.json())
     .then(data => {
+        // Hide loading
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        
         if (data.status === 'success') {
             window.location.href = `appointments.php?success=${encodeURIComponent(data.message)}`;
         } else {
             alert(data.message);
         }
+    })
+    .catch(error => {
+        console.log(error)
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        alert("An error occurred. Please try again.");
     });
 }
 
@@ -237,6 +250,9 @@ function saveReschedule() {
     const newDate = document.getElementById('modal_date').value;
     const newTime = document.getElementById('modal_time').value;
 
+    // Show loading
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+
     fetch('booking_actions.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -244,14 +260,30 @@ function saveReschedule() {
     })
     .then(res => res.json())
     .then(data => {
+        // Hide loading
+        document.getElementById('loadingOverlay').classList.add('hidden');
+
         if (data.status === 'success') {
             window.location.href = `appointments.php?success=${encodeURIComponent(data.message)}`;
         } else {
             alert(data.message);
         }
+    })
+    .catch(error => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        alert("An error occurred. Please try again.");
     });
 }
 </script>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+        <p class="text-gray-700 font-semibold text-lg">Processing request...</p>
+        <p class="text-gray-500 text-sm mt-1">Please wait, do not close this window.</p>
+    </div>
+</div>
 
 <?php include 'footer.php'; ?>
 </body>

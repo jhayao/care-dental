@@ -102,9 +102,8 @@ $(document).ready(function() {
                             </td>
                             <td class="d-flex flex-column gap-2">
                                 <button onclick="openModal(<?= $a['id']; ?>)" class="btn btn-primary btn-sm">View</button>
-                                <button onclick="openRescheduleModal('<?= $a['id']; ?>', '<?= $a['appointment_date']; ?>', '<?= $a['appointment_time']; ?>')" class="btn btn-warning btn-sm text-white">Reschedule</button>
-                                <?php if ($a['status'] === 'cancelled'): ?>
-                                    <button onclick="viewCancellation(<?= $a['id']; ?>)" class="btn btn-danger btn-sm">View Cancellation</button>
+                                <?php if ($a['status'] !== 'cancelled' && $a['status'] !== 'refunded' && $a['status'] !== 'pending'): ?>
+                                    <button onclick="openRescheduleModal('<?= $a['id']; ?>', '<?= $a['appointment_date']; ?>', '<?= $a['appointment_time']; ?>')" class="btn btn-warning btn-sm text-white">Reschedule</button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -195,8 +194,14 @@ function openModal(bookingId) {
         const b = data.booking;
 
         document.getElementById('modalDate').textContent = b.appointment_date;
-      document.getElementById('modalTime').textContent = b.appointment_time_12h;
+        document.getElementById('modalTime').textContent = b.appointment_time_12h;
         document.getElementById('modalStatus').textContent = b.status;
+        
+        // Show Cancelled At if applicable
+        const statusLower = b.status.toLowerCase();
+        if ((statusLower === 'cancelled' || statusLower === 'refunded') && b.cancelled_at) {
+             document.getElementById('modalStatus').innerHTML += ` <span class="text-xs text-red-500 block">(Cancelled at: ${b.cancelled_at})</span>`;
+        }
       
 
         // Items
@@ -239,6 +244,23 @@ function openModal(bookingId) {
             document.getElementById('modalDiscountAmount').textContent = parseFloat(b.discount).toFixed(2);
         } else {
             discountDiv.style.display = 'none';
+        }
+
+        // Hide Footer Buttons for Cancelled/Refunded
+        const confirmBtn = document.getElementById('confirmBtn');
+        const completeBtn = document.getElementById('completeBtn');
+        // statusLower already defined above
+
+
+        if (statusLower === 'cancelled' || statusLower === 'refunded' || statusLower === 'completed') {
+            confirmBtn.style.display = 'none';
+            completeBtn.style.display = 'none';
+        } else {
+             // Logic: Confirm is for pending, Complete is for Confirmed
+             // But for now, user just asked to hide them for cancelled/refunded. 
+             // To be safe and clean, I'll reset them to block/inline-block
+            confirmBtn.style.display = 'inline-block';
+            completeBtn.style.display = 'inline-block';
         }
 
         document.getElementById('viewModal').classList.remove('hidden');

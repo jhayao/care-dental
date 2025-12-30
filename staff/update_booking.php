@@ -17,9 +17,9 @@ $timeSlot = $data['time_slot'] ?? null;
 // If rescheduling
 if ($bookingDate && $timeSlot) {
     $stmt = $conn->prepare("UPDATE bookings 
-        SET booking_date = ?, time_slot = ?, status = 'rescheduled', updated_at = NOW()
+        SET appointment_date = ?, appointment_time = ?, time_slot = ?, status = 'rescheduled', updated_at = NOW()
         WHERE id = ?");
-    $stmt->bind_param("ssi", $bookingDate, $timeSlot, $bookingId);
+    $stmt->bind_param("sssi", $bookingDate, $timeSlot, $timeSlot, $bookingId);
 } elseif ($status) {
     // If updating status only
     $stmt = $conn->prepare("UPDATE bookings 

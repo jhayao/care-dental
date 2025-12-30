@@ -62,7 +62,12 @@ $(document).ready(function() {
 
 <main class="flex-1 p-8 overflow-y-auto">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center">Manage Packages</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-blue-700">Manage Packages</h1>
+            <a href="add_packages.php" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
+                <i class="fas fa-plus"></i> Add Package
+            </a>
+        </div>
 
         <?php if($success): ?>
             <div class="modal fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

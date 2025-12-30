@@ -49,13 +49,16 @@ foreach ($_SESSION['cart'] as $item) {
 $discount = ($category === 'Senior' || $category === 'PWD') ? $subtotal * 0.20 : 0;
 $total = $subtotal - $discount;
 
+// Ensure minimum duration of 30 mins to prevent logic errors
+if ($total_minutes <= 0) $total_minutes = 30;
+
 /* Convert total minutes to hours + minutes */
 $hours = floor($total_minutes / 60);
 $minutes = $total_minutes % 60;
 
 /* ================= FETCH DENTIST AVAILABILITY ================= */
 $available_slots = [];
-$stmt = $conn->prepare("SELECT available_date, start_time, end_time FROM dentist_calendar ORDER BY available_date, start_time");
+$stmt = $conn->prepare("SELECT available_date, start_time, end_time FROM dentist_calendar WHERE available_date >= CURDATE() ORDER BY available_date, start_time");
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
@@ -68,18 +71,23 @@ $stmt->close();
 
 /* ================= FETCH EXISTING BOOKINGS ================= */
 $existing_bookings = [];
-$stmt = $conn->prepare("SELECT appointment_date, appointment_time, duration_minutes FROM bookings");
+// Filter out cancelled/refunded/rejected bookings so they don't block slots
+$stmt = $conn->prepare("
+    SELECT appointment_date, appointment_time, duration_minutes 
+    FROM bookings 
+    WHERE status NOT IN ('cancelled', 'refunded', 'rejected', 'failed')
+");
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $date = $row['appointment_date'];
+    $duration = ($row['duration_minutes'] > 0) ? $row['duration_minutes'] : 60; // Default to 1 hour if missing
     $start = strtotime($row['appointment_time']);
-    $end = $start + ($row['duration_minutes'] * 60);
+    $end = $start + ($duration * 60);
     $existing_bookings[$date][] = [
-    'start' => $start,
-    'end'   => $end
-];
-
+        'start' => $start,
+        'end'   => $end
+    ];
 }
 $stmt->close();
 
@@ -207,18 +215,22 @@ function closeModal() {
 </div>
 
 <div class="space-y-4">
-    <label class="font-semibold">Available Appointment Dates</label>
-    <select name="appointment_date" id="appointment_date" class="w-full border rounded px-3 py-2" required onchange="updateTimes()">
-        <option value="">-- Select Date --</option>
-        <?php foreach ($available_times as $date => $times): ?>
-            <option value="<?= $date ?>"><?= date('F d, Y', strtotime($date)) ?></option>
-        <?php endforeach; ?>
-    </select>
+    <label class="font-semibold text-lg mb-2 block">Select Appointment Date</label>
+    <div class="border rounded-lg p-3 mb-4 bg-white relative z-0">
+        <div id="bookingCalendar"></div>
+    </div>
+    <input type="hidden" name="appointment_date" id="appointment_date" required>
 
-    <label class="font-semibold">Available Time</label>
+    <div id="timeSelectionSection" class="hidden transition-all duration-300">
+        <label class="font-semibold block mb-1">Select Available Time</label>
+        <?php if(empty($available_times)): ?>
+             <p class="text-sm text-red-500 mb-2">No available dates found. Please check back later.</p>
+        <?php endif; ?>
+
     <select name="appointment_time" id="appointment_time" class="w-full border rounded px-3 py-2" required>
-        <option value="">-- Select Time --</option>
+        <option value="">-- Select Date First --</option>
     </select>
+    </div>
 
     <?php foreach ($_SESSION['cart'] as $item): ?>
         <input type="hidden" name="cart_items[]" value="<?= $item['type'] . ':' . $item['id'] ?>">
@@ -233,16 +245,101 @@ function closeModal() {
 
 <?php include 'footer.php'; ?>
 
+<!-- FullCalendar -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<style>
+    .fc-toolbar-title { font-size: 1.25rem !important; }
+    .fc-button { font-size: 0.75rem !important; }
+</style>
 <script>
 const availableTimes = <?= json_encode($available_times); ?>;
+console.log('Available Times:', availableTimes); // Debug for Console
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('bookingCalendar');
+    
+    // Debug info in Time Selection area
+    const timeSection = document.getElementById('timeSelectionSection');
+    const keys = Object.keys(availableTimes);
+    if (keys.length === 0) {
+        timeSection.innerHTML += '<div class="p-2 text-xs text-red-500 bg-red-50 rounded mt-2">Debug: No available dates found from server.</div>';
+    } else {
+        // timeSection.innerHTML += `<div class="p-2 text-xs text-green-500 bg-green-50 rounded mt-2">Debug: Found availability for: ${keys.slice(0, 3).join(', ')}...</div>`;
+    }
 
-function updateTimes() {
-    const date = appointment_date.value;
-    appointment_time.innerHTML = '<option value="">-- Select Time --</option>';
-    if (!availableTimes[date]) return;
-    availableTimes[date].forEach(t => {
-        appointment_time.innerHTML += `<option value="${t.value}">${t.text}</option>`;
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev',
+            center: 'title',
+            right: 'next'
+        },
+        height: 'auto',
+        // validRange: { start: '<?= date('Y-m-d'); ?>' }, // Use PHP Server Date
+        dayCellDidMount: function(arg) {
+            // Fix timezone offset issue: FullCalendar arg.date is UTC?
+            // arg.date is a Date object. converting to ISO string might shift day if we are not careful.
+            // Safer to use the data attribute formatting if available, or simple local format.
+            // FullCalendar usually matches local.
+            // Let's us simple trick:
+            const date = arg.date;
+            const dateStr = date.getFullYear() + "-" + 
+                            String(date.getMonth() + 1).padStart(2, '0') + "-" + 
+                            String(date.getDate()).padStart(2, '0');
+            
+            const cell = arg.el;
+            
+            if (availableTimes[dateStr]) {
+                // Available: GREEN
+                cell.style.backgroundColor = '#ecfdf5'; // Green-50
+                cell.style.cursor = 'pointer';
+            } else {
+                // Unavailable: GRAY
+                cell.style.backgroundColor = '#f3f4f6'; // Gray-100
+                cell.style.pointerEvents = 'none';
+                cell.style.color = '#9ca3af';
+            }
+        },
+        dateClick: function(info) {
+            if (!availableTimes[info.dateStr]) return;
+
+            // Reset previous styles (we have to manually track or re-render, 
+            // but just removing the class 'selected-date' and adding it is easier if we keep the CSS for selection)
+            document.querySelectorAll('.fc-daygrid-day').forEach(el => {
+                 const dStr = el.dataset.date;
+                 if (availableTimes[dStr]) {
+                     el.style.backgroundColor = '#ecfdf5';
+                     el.style.color = '#374151'; // Reset to dark gray
+                 } else {
+                     el.style.backgroundColor = '#f3f4f6';
+                     el.style.color = '#9ca3af';
+                 }
+            });
+            
+            // Highlight
+            info.dayEl.style.backgroundColor = '#3b82f6'; // Blue
+            info.dayEl.style.color = 'white';
+
+            const dateInput = document.getElementById('appointment_date');
+            dateInput.value = info.dateStr;
+
+            updateTimes(info.dateStr);
+
+            document.getElementById('timeSelectionSection').classList.remove('hidden');
+            document.getElementById('timeSelectionSection').scrollIntoView({ behavior: 'smooth' });
+        }
     });
+    calendar.render();
+});
+
+function updateTimes(date) {
+    const timeSelect = document.getElementById('appointment_time');
+    timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
+    
+    if (availableTimes[date]) {
+        availableTimes[date].forEach(t => {
+            timeSelect.innerHTML += `<option value="${t.value}">${t.text}</option>`;
+        });
+    }
 }
 </script>
 </body>

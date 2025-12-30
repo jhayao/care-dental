@@ -74,98 +74,112 @@ $admin = $conn->query("
    ========================================================== */
 if ($action === 'cancel') {
 
-    if (empty($xendit_payment_id) || $total_amount <= 0) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'No valid payment found for refund.'
+    $refundProcessed = false;
+    $refundMessage = "";
+
+    // 1. Attempt Refund ONLY if we have a valid payment ID and amount
+    if (!empty($xendit_payment_id) && $total_amount > 0 && $payment['status'] === 'approved') {
+        
+        $apiKey = 'xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'; 
+
+        $refundData = [
+            'invoice_id' => $xendit_payment_id,
+            'reason' => 'REQUESTED_BY_CUSTOMER',
+            'amount' => $total_amount,
+            'currency' => 'PHP'
+        ];
+
+        $ch = curl_init('https://api.xendit.co/refunds');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($refundData),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Basic ' . base64_encode($apiKey . ':')
+            ]
         ]);
-        exit;
-    }
 
-    /* ---------- XENDIT REFUND ---------- */
-    $apiKey = 'xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc'; // MOVE TO ENV
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-    $refundData = [
-        'payment_request_id' => $xendit_payment_id,
-        'reason' => 'REQUESTED_BY_CUSTOMER',
-        'amount' => $total_amount,
-        'currency' => 'PHP'
-    ];
+        $refundResponse = json_decode($response, true);
 
-    $ch = curl_init('https://api.xendit.co/refunds');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode($refundData),
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Basic ' . base64_encode($apiKey . ':')
-        ]
-    ]);
-
-    $response  = curl_exec($ch);
-    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $refundResponse = json_decode($response, true);
-
-    if ($httpCode < 200 || $httpCode >= 300) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Refund failed.',
-            'xendit_error' => $refundResponse
-        ]);
-        exit;
+        if ($httpCode >= 200 && $httpCode < 300) {
+            $refundProcessed = true;
+            $refundMessage = "Your payment of PHP " . number_format($total_amount, 2) . " has been refunded.";
+        } else {
+             // Optional: Log error but maybe still allow cancellation? 
+             // user requested "pending status should be cancelled anytime". 
+             // If it fails refunding a PAID status, we probably SHOULD stop and warn.
+             // But if it was pending, we wouldn't be in this block.
+             echo json_encode([
+                'status' => 'error',
+                'message' => 'Refund failed: ' . ($refundResponse['message'] ?? 'Unknown error'),
+                'xendit_error' => $refundResponse
+            ]);
+            exit;
+        }
     }
 
     /* ---------- UPDATE BOOKING ---------- */
+    // If we processed a refund, marks as 'refunded', otherwise 'cancelled'
+    $finalStatus = $refundProcessed ? 'refunded' : 'cancelled';
+
     $stmt = $conn->prepare("
         UPDATE bookings 
-        SET status = 'cancelled', cancelled_at = NOW()
+        SET status = ?, cancelled_at = NOW()
         WHERE id = ? AND user_id = ?
     ");
-    $stmt->bind_param("ii", $booking_id, $user_id);
+    $stmt->bind_param("sii", $finalStatus, $booking_id, $user_id);
     $stmt->execute();
     $stmt->close();
 
     /* ---------- UPDATE PAYMENT ---------- */
+    // Also cancel the payment record so it doesn't stay 'pending'
     $stmt = $conn->prepare("
         UPDATE payments 
-        SET status = 'cancelled'
+        SET status = ?
         WHERE id = ?
     ");
-    $stmt->bind_param("i", $payment['id']);
+    $stmt->bind_param("si", $finalStatus, $payment['id']);
     $stmt->execute();
     $stmt->close();
 
     /* ---------- EMAILS ---------- */
+    $emailBody = "Your appointment on {$booking_date} at {$booking_time} has been cancelled.\n";
+    if ($refundProcessed) {
+        $emailBody .= $refundMessage . "\n";
+    }
+
     $customerMessage = "
 Hello {$full_name},
 
-Your appointment on {$booking_date} at {$booking_time} has been cancelled.
-Your payment of PHP " . number_format($total_amount, 2) . " has been refunded.
+{$emailBody}
 
 Thank you,
 B-Dental Care
 ";
 
     $adminMessage = "
-Booking Cancelled & Refunded
-
+Booking Cancelled
 Patient: {$full_name}
 Date: {$booking_date}
 Time: {$booking_time}
 Booking ID: {$booking_id}
-Refunded Amount: PHP " . number_format($total_amount, 2) . "
 ";
+    if ($refundProcessed) {
+         $adminMessage .= "Refunded Amount: PHP " . number_format($total_amount, 2);
+    }
 
-    sendEmail($booking['email'], 'Booking Cancelled & Refunded', $customerMessage);
-    if (!empty($staff['email'])) sendEmail($staff['email'], 'Cancelled Booking (Refunded)', $adminMessage);
-    if (!empty($admin['email'])) sendEmail($admin['email'], 'Cancelled Booking (Refunded)', $adminMessage);
+    sendEmail($booking['email'], 'Booking Cancelled', $customerMessage);
+    if (!empty($staff['email'])) sendEmail($staff['email'], 'Cancelled Booking', $adminMessage);
+    if (!empty($admin['email'])) sendEmail($admin['email'], 'Cancelled Booking', $adminMessage);
 
     echo json_encode([
         'status' => 'success',
-        'message' => 'Booking cancelled and payment refunded successfully.'
+        'message' => $refundProcessed ? 'Booking cancelled and payment refunded.' : 'Booking cancelled successfully.'
     ]);
     exit;
 }
@@ -185,10 +199,10 @@ if ($action === 'reschedule') {
 
     $stmt = $conn->prepare("
         UPDATE bookings
-        SET appointment_date = ?, appointment_time = ?, status = 'rescheduled'
+        SET appointment_date = ?, appointment_time = ?, time_slot = ?, status = 'rescheduled'
         WHERE id = ? AND user_id = ?
     ");
-    $stmt->bind_param("ssii", $new_date, $new_time, $booking_id, $user_id);
+    $stmt->bind_param("sssii", $new_date, $new_time, $new_time, $booking_id, $user_id);
 
     if ($stmt->execute()) {
 

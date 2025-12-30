@@ -44,7 +44,7 @@ function sendEmail($email, $subject, $message) {
 
         // Send the email
         $mail->send();
-        echo 'Email has been sent successfully.';
+        // echo 'Email has been sent successfully.'; // SUCCESS: Silent return for API compatibility
     } catch (Exception $e) {
         echo "Email could not be sent. Error: {$mail->ErrorInfo}";
     }

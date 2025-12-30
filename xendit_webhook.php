@@ -42,8 +42,11 @@ if ($result->num_rows === 0) {
 
 $data = $result->fetch_assoc();
 
-// ✅ PAID
-if ($paymentStatus === 'PAID') {
+// Log Raw Payload for Debugging
+file_put_contents('webhook_log.txt', date('Y-m-d H:i:s') . " - Status: $paymentStatus - Payload: " . file_get_contents('php://input') . PHP_EOL, FILE_APPEND);
+
+// ✅ PAID or SETTLED (Both mean success)
+if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
 
     // Prevent double processing
     if ($data['status'] === 'approved') {
