@@ -189,4 +189,7 @@ create or replace table payments
 INSERT INTO users (first_name, last_name, address_, email, pword, user_type, status_, created_at, updated_at) VALUES 
 ('Admin', 'User', 'Admin Address', 'admin@example.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'admin', 'Active', NOW(), NOW()),
 ('Staff', 'User', 'Staff Address', 'staff@example.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'staff', 'Active', NOW(), NOW()),
-('Patient', 'User', 'Patient Address', 'patient@example.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'patient', 'Active', NOW(), NOW());
+('Patient', 'User', 'Patient Address', 'patient@example.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'patient', 'Active', NOW(), NOW()),
+('Saminodin', 'Admin', 'Admin Address', 'dsaminodin@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'admin', 'Active', NOW(), NOW()),
+('Fretchel Ann', 'Mahinay', 'Staff Address', 'fretchelannmahinay22@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'staff', 'Active', NOW(), NOW()),
+('TG', 'Bus', 'Address', 'tgbus@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'staff', 'Active', NOW(), NOW());
