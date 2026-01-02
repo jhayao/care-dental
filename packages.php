@@ -16,15 +16,9 @@ if (isset($_SESSION['flash_message'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packages - B-Dental Care</title>
+<title>Packages - B-Dental Care</title>
 
-    <!-- Tailwind -->
     <link href="./assets/css/main.css" rel="stylesheet">
-
-    <!-- Bootstrap (for badge) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 
@@ -35,7 +29,7 @@ if (isset($_SESSION['flash_message'])) {
 
 <?php include 'header.php'; ?>
 
-<main class="max-w-6xl mx-auto p-6">
+<main class="max-w-7xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">Our Packages</h1>
 
     <?php if ($result->num_rows > 0): ?>

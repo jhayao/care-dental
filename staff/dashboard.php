@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Profile</title>
+<title>Staff Dashboard</title>
 <link href="../assets/css/main.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,14 +13,14 @@
 
 
     <aside class="sticky top-0 h-screen overflow-y-auto">
-        <?php include 'admin_sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
     </aside>
 
 
 <main class="flex-1 p-8 overflow-y-auto h-screen">
 
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Staff Dashboard</h1>
         <p class="text-gray-500 mt-1">Overview of clinic statistics and charts</p>
     </div>
 
@@ -173,7 +173,7 @@ function loadDashboard() {
 
              const genderLabel = gender ? gender : 'Not Specified';
 
-            card.innerHTML = `
+             card.innerHTML = `
                 <h3 class="text-lg font-bold" style="color: ${color}">${genderLabel}</h3>
                 <p class="text-3xl font-semibold mt-2 text-gray-800">${count}</p>
             `;

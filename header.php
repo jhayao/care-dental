@@ -12,7 +12,7 @@ $cart_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
     <nav class="bg-white shadow-md py-4 px-6 flex items-center justify-between">
 
         <div class="flex items-center space-x-3">
-            <a href="home.php" class="text-xl font-bold text-blue-700 flex items-center space-x-2">
+            <a href="home.php" class="text-xl font-bold text-blue-700 flex items-center space-x-2 no-underline hover:no-underline">
              
                 <span>B-Dental Care</span>
             </a>

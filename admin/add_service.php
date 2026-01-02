@@ -57,7 +57,6 @@ if (!isset($_SESSION['user_id'])) {
                 <select name="status" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
                 </select>
             </div>
             <div class="mb-6">

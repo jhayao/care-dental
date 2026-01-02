@@ -113,16 +113,10 @@ $stmt->close();
             <td class="border px-4 py-2">₱<?= number_format($p['price'], 2); ?></td>
             <td class="border px-4 py-2"><?= intval($p['duration_minutes']); ?> Minutes</td>
             <td class="border px-4 py-2 flex justify-center gap-2">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1 edit-btn"
-                        data-id="<?= $p['id']; ?>"
-                        data-name="<?= htmlspecialchars($p['package_name'], ENT_QUOTES); ?>"
-                        data-desc="<?= htmlspecialchars($p['description'], ENT_QUOTES); ?>"
-                        data-incl="<?= htmlspecialchars($p['inclusions'], ENT_QUOTES); ?>"
-                        data-duration="<?= htmlspecialchars($p['duration_minutes'], ENT_QUOTES); ?>"
-                        data-status="<?= htmlspecialchars($p['status'], ENT_QUOTES); ?>"
-                        data-price="<?= htmlspecialchars($p['price'], ENT_QUOTES); ?>">
-                        Edit
-                </button>
+                <a href="edit_package.php?id=<?= $p['id']; ?>" 
+   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1">
+    Edit
+</a>
 
                 <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded flex items-center gap-1 delete-btn"
                         data-id="<?= $p['id']; ?>">
@@ -151,54 +145,7 @@ $stmt->close();
 </div>
 
 
-<div id="editPackageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center">
-    <div class="bg-white rounded-lg w-1/3 p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Edit Package</h2>
-        <form id="editPackageForm" action="update_package.php" method="POST">
-            <input type="hidden" name="id" id="editPackageId">
-            
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Package Name</label>
-                <input type="text" name="package_name" id="editPackageName" class="w-full border px-3 py-2 rounded" required>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Description</label>
-                <textarea name="description" id="editPackageDesc" class="w-full border px-3 py-2 rounded" required></textarea>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Inclusions (in comma)</label>
-                <textarea name="inclusions" id="editPackageIncl" class="w-full border px-3 py-2 rounded h-32" required></textarea>
-            </div>
 
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Status</label>
-                <select name="status" id="editPackageStatus" class="w-full border px-3 py-2 rounded" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
-                </select>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Price</label>
-                <input type="number" step="0.01" name="price" id="editPackagePrice" class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <!-- New Duration Field -->
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Duration (minutes)</label>
-                <input type="number" name="duration_minutes" id="editPackageDuration" min="1" class="w-full border px-3 py-2 rounded" required>
-            </div>
-            
-            <div class="flex justify-end gap-2">
-                <button type="button" id="closeEditPackageModal" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Changes</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 
 <script>
@@ -210,21 +157,7 @@ $(document).ready(function(){
     });
 
   
-    $('.edit-btn').click(function(){
-        $('#editPackageId').val($(this).data('id'));
-        $('#editPackageName').val($(this).data('name'));
-        $('#editPackageDesc').val($(this).data('desc'));
-        $('#editPackageIncl').val($(this).data('incl'));
-        $('#editPackageStatus').val($(this).data('status'));
-        $('#editPackagePrice').val($(this).data('price'));
-        $('#editPackageDuration').val($(this).data('duration')); // NEW
-        $('#editPackageModal').removeClass('hidden').addClass('flex');
-    });
 
-
-    $('#closeEditPackageModal').click(function(){
-        $('#editPackageModal').removeClass('flex').addClass('hidden');
-    });
 
    
     $('.delete-btn').click(function(){

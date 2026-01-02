@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header("Location: admin/bookings.php");
                         exit;
                     case 'staff':
-                        header("Location: staff/bookings.php");
+                        header("Location: staff/dashboard.php");
                         exit;
                     case 'patient':
                         header("Location: home.php");
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Login - B-Dental Care</title>
+    <title>Login - B-Dental Care</title>
     <link href="./assets/css/main.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="mt-12 text-center">
     <h2 class="text-2xl font-bold mb-6 text-gray-700">
-        Patient Login Page
+        User Login
     </h2>
 
     <?php if ($error): ?>
@@ -115,28 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-<footer class="bg-blue-700 text-white mt-auto py-8">
-    <div class="max-w-6xl mx-auto px-4 text-center">
+<footer class="bg-blue-700 text-white mt-auto pb-8">
+    <div class="mx-auto px-4 text-center">
 
-        <!-- Branding -->
-        <div class="mb-6">
-            <h3 class="text-xl font-bold">B-Dental Care</h3>
-            <p class="text-gray-200 text-sm">
-                Quality dental care for a healthy, confident smile.
-            </p>
-        </div>
-        <!-- Contact Info -->
-        <div class="mb-6">
-            <h4 class="text-lg font-semibold mb-2">Contact Us</h4>
-            <div class="flex justify-center gap-4 mb-2 text-2xl">
-                <a href="#" class="hover:text-gray-300"><i class="fab fa-facebook"></i></a>
-                <a href="mailto:bdcclinic@gmail.com" class="hover:text-gray-300"><i class="fas fa-envelope"></i></a>
-            </div>
-            <p class="text-gray-200 text-sm">
-                Email: <a href="mailto:bdcclinic@gmail.com" class="hover:text-gray-300">bdcclinic@gmail.com</a><br>
-                Phone: 0920-000-0000
-            </p>
-        </div>
+    
 
         <!-- Copyright -->
         <div class="border-t border-blue-600 pt-4 text-gray-200 text-sm">

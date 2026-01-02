@@ -113,21 +113,16 @@ $stmt->close();
                         </td>
 
                         <td class="border px-4 py-2"><?= date('M d, Y', strtotime($p['created_at'])); ?></td>
-                        <td class="border px-4 py-2 flex justify-center gap-2">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1 edit-btn"
-                                data-id="<?= $p['id']; ?>"
-                                data-first="<?= htmlspecialchars($p['first_name']); ?>"
-                                data-last="<?= htmlspecialchars($p['last_name']); ?>"
-                                data-address="<?= htmlspecialchars($p['address_']); ?>"
-                                data-email="<?= htmlspecialchars($p['email']); ?>"
-                                data-gender="<?= $p['gender']; ?>"
-                                data-status="<?= $p['status_']; ?>">
-                                <i class="fas fa-pen"></i> Edit
-                            </button>
+                        <td class="border px-4 py-2">
                             <?php if($p['status_'] !== 'Archived'): ?>
                             <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 archive-btn"
-                                onclick="archiveUser(<?= $p['id']; ?>)">
+                                onclick="updateUserStatus(<?= $p['id']; ?>, 'archive')">
                                 <i class="fas fa-archive"></i> Archive
+                            </button>
+                            <?php else: ?>
+                            <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 unarchive-btn"
+                                onclick="updateUserStatus(<?= $p['id']; ?>, 'unarchive')">
+                                <i class="fas fa-box-open"></i> Unarchive
                             </button>
                             <?php endif; ?>
                         </td>
@@ -138,105 +133,35 @@ $stmt->close();
     </div>
 </div>
 
-
-<div id="editPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white rounded-lg w-1/3 p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Edit Patient</h2>
-        <form id="editPatientForm" action="update_patient.php" method="POST">
-            <input type="hidden" name="id" id="editPatientId">
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">First Name</label>
-                <input type="text" name="first_name" id="editFirstName" class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Last Name</label>
-                <input type="text" name="last_name" id="editLastName" class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Address</label>
-                <input type="text" name="address" id="editAddress" class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Email</label>
-                <input type="email" name="email" id="editEmail" class="w-full border px-3 py-2 rounded" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Gender</label>
-                <select name="gender" id="editGender" class="w-full border px-3 py-2 rounded" required>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Status</label>
-                <select name="status" id="editStatus" class="w-full border px-3 py-2 rounded" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
-                </select>
-            </div>
-
-            <div class="flex justify-end gap-2">
-                <button type="button" id="closeEditPatientModal" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Changes</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Confirmation Modal -->
-<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
-        <div class="mb-4">
-            <i class="fas fa-question-circle text-blue-500 text-4xl"></i>
-        </div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Confirm Action</h3>
-        <p class="text-gray-600 mb-6" id="confirmMessage">Are you sure?</p>
-        <div class="flex justify-center gap-3">
+<!-- Confirm Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 transition-opacity">
+    <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full transform transition-all scale-100">
+        <h3 class="text-lg font-bold mb-2 text-gray-800">Confirm Action</h3>
+        <p id="confirmMessage" class="text-gray-600 mb-6">Are you sure you want to proceed?</p>
+        <div class="flex justify-end gap-3">
             <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancel</button>
-            <button id="confirmBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Confirm</button>
+            <button id="confirmBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Generic Alert Modal -->
-<div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white rounded-lg w-full max-w-sm p-6 relative shadow-2xl text-center">
-        <div class="mb-4" id="alertIcon"></div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2" id="alertTitle">Notification</h3>
-        <p class="text-gray-600 mb-6" id="alertMessage"></p>
-        <button onclick="closeAlertModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">OK</button>
+<!-- Alert Modal -->
+<div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 transition-opacity">
+    <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full text-center">
+        <div id="alertIcon" class="mb-4"></div>
+        <h3 id="alertTitle" class="text-xl font-bold mb-2">Notification</h3>
+        <p id="alertMessage" class="text-gray-600 mb-6">Message goes here.</p>
+        <button onclick="closeAlertModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">Okay</button>
     </div>
 </div>
+
 
 <script>
-$(document).ready(function () {
+$(document).ready(function() {
     $('#patientsTable').DataTable({
         pageLength: 10,
         lengthMenu: [5, 10, 25, 50],
         responsive: true
-    });
-  
-    $('.edit-btn').click(function () {
-        $('#editPatientId').val($(this).data('id'));
-        $('#editFirstName').val($(this).data('first'));
-        $('#editLastName').val($(this).data('last'));
-        $('#editAddress').val($(this).data('address'));
-        $('#editEmail').val($(this).data('email'));
-        $('#editGender').val($(this).data('gender'));
-        $('#editStatus').val($(this).data('status'));
-        $('#editPatientModal').removeClass('hidden').addClass('flex');
-    });
-
-    $('#closeEditPatientModal').click(function () {
-        $('#editPatientModal').removeClass('flex').addClass('hidden');
     });
 });
 

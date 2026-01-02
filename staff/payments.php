@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_type']) || ($_SESSION['user_type'] !== 'staff' && $_S
     exit;
 }
 
-// Fetch Payments with Booking Details (Staff view)
+// Fetch Payments with Booking Details
 $sql = "
     SELECT 
         p.id, 
@@ -52,8 +52,9 @@ if (!$payments_result) {
         <header class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Payments</h1>
-                <p class="text-gray-500">View transaction history.</p>
+                <p class="text-gray-500">View and track all transaction history.</p>
             </div>
+            <!-- Optional: Export Button could go here -->
         </header>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -109,14 +110,16 @@ if (!$payments_result) {
 
     <script>
         $(document).ready(function() {
+            /*
             $('#paymentsTable').DataTable({
                 responsive: true,
-                order: [[0, 'desc']], 
+                order: [[0, 'desc']], // Sort by ID descending
                 language: {
                     search: "Filter payments:",
                     lengthMenu: "Show _MENU_ entries",
                 }
             });
+            */
         });
     </script>
 </body>

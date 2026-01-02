@@ -29,7 +29,7 @@ session_start();
 </section>
 
 
-<section class="py-16 max-w-6xl mx-auto px-6">
+<!-- <section class="py-16 max-w-6xl mx-auto px-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
 
 
@@ -51,7 +51,7 @@ session_start();
         </div>
 
     </div>
-</section>
+</section> -->
 
 <?php include 'footer.php'; ?>
 

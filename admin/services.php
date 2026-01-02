@@ -83,15 +83,10 @@ $stmt->close();
                     <td class="border px-4 py-2">₱<?= number_format($s['price'], 2); ?></td>
                     <td class="border px-4 py-2"><?= date('M d, Y', strtotime($s['created_at'])); ?></td>
                     <td class="border px-4 py-2 flex justify-center gap-2">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1 edit-btn"
-                            data-id="<?= $s['id']; ?>"
-                            data-name="<?= htmlspecialchars($s['service_name'], ENT_QUOTES); ?>"
-                            data-desc="<?= htmlspecialchars($s['description'], ENT_QUOTES); ?>"
-                            data-status="<?= htmlspecialchars($s['status'], ENT_QUOTES); ?>"
-                            data-price="<?= htmlspecialchars($s['price'], ENT_QUOTES); ?>"
-                            data-duration="<?= htmlspecialchars($s['duration_minutes'], ENT_QUOTES); ?>">
-                          Edit
-                        </button>
+                        <a href="edit_service.php?id=<?= $s['id']; ?>" 
+   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1">
+    Edit
+</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -101,42 +96,7 @@ $stmt->close();
 </div>
 
 <!-- Edit Service Modal -->
-<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center">
-    <div class="bg-white rounded-lg w-1/3 p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Edit Service</h2>
-        <form id="editForm" action="update_service.php" method="POST">
-            <input type="hidden" name="id" id="serviceId">
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Service Name</label>
-                <input type="text" name="service_name" id="serviceName" class="w-full border px-3 py-2 rounded" required>
-            </div>
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Description</label>
-                <textarea name="description" id="serviceDesc" class="w-full border px-3 py-2 rounded" required></textarea>
-            </div>
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Duration (minutes)</label>
-                <input type="number" name="duration_minutes" id="serviceDuration" min="1" class="w-full border px-3 py-2 rounded" required>
-            </div>
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Status</label>
-                <select name="status" id="serviceStatus" class="w-full border px-3 py-2 rounded" required>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="block mb-1 font-semibold">Price</label>
-                <input type="number" step="0.01" name="price" id="servicePrice" class="w-full border px-3 py-2 rounded" required>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button type="button" id="closeModal" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
-            </div>
-        </form>
-    </div>
-</div>
+
 
 <?php if(isset($_SESSION['success'])): ?>
 <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -158,19 +118,7 @@ $(document).ready(function(){
         responsive: true
     });
 
-    $('.edit-btn').click(function(){
-        $('#serviceId').val($(this).data('id'));
-        $('#serviceName').val($(this).data('name'));
-        $('#serviceDesc').val($(this).data('desc'));
-        $('#serviceStatus').val($(this).data('status'));
-        $('#servicePrice').val($(this).data('price'));
-        $('#serviceDuration').val($(this).data('duration'));
-        $('#editModal').removeClass('hidden').addClass('flex');
-    });
 
-    $('#closeModal').click(function(){
-        $('#editModal').removeClass('flex').addClass('hidden');
-    });
 
     $('#closeSuccessModal').click(function(){
         $('#successModal').fadeOut();

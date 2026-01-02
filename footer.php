@@ -24,17 +24,7 @@
         </div>
 
         <!-- Contact Info -->
-        <div class="mb-6">
-            <h4 class="text-lg font-semibold mb-2">Contact Us</h4>
-            <div class="flex justify-center gap-4 mb-2 text-2xl">
-                <a href="#" class="hover:text-gray-300"><i class="fab fa-facebook"></i></a>
-                <a href="mailto:bdcclinic@gmail.com" class="hover:text-gray-300"><i class="fas fa-envelope"></i></a>
-            </div>
-            <p class="text-gray-200 text-sm">
-                Email: <a href="mailto:bdcclinic@gmail.com" class="hover:text-gray-300">bdcclinic@gmail.com</a><br>
-                Phone: 0920-000-0000
-            </p>
-        </div>
+
 
         <!-- Copyright -->
         <div class="border-t border-blue-600 pt-4 text-gray-200 text-sm">

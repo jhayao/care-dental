@@ -15,6 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $package_name = trim($_POST['package_name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $status = $_POST['status'] ?? 'Inactive';
+    $status = trim($status); // Ensure it is trimmed!
+    // DEBUG:
+    // var_dump($status); die();
     $price = $_POST['price'] ?? 0;
     $service_ids = $_POST['service_ids'] ?? []; // Array of selected service IDs
     $posted_by = $_SESSION['user_id'];
@@ -50,22 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Encode inclusions as JSON
     $inclusions_json = json_encode($inclusions_names);
 
-    // Prepare insert
+    // Validate status against allowed values to be safe for literal insertion
+    $allowed_statuses = ['Active', 'Inactive', 'Archived'];
+    if (!in_array($status, $allowed_statuses)) {
+        $status = 'Inactive';
+    }
+
+    // Prepare insert - Interpolating status directly to bypass potential bind_param issue with ENUM
     $stmt = $conn->prepare("
         INSERT INTO packages
             (posted_by, package_name, description, inclusions, status, price, duration_minutes, created_at, updated_at)
         VALUES
-            (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            (?, ?, ?, ?, '$status', ?, ?, NOW(), NOW())
     ");
+    
+    // Type string changed from 'isssidi' to 'issidi' (removed one 's' for status)
+    // removed $status from bind_param arguments
 
     if ($stmt) {
         $stmt->bind_param(
-            "isssidi",
+            "issidi",
             $posted_by,
             $package_name,
             $description,
             $inclusions_json,
-            $status,
             $price,
             $total_duration
         );

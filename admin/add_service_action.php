@@ -11,7 +11,14 @@ $posted_by = $_SESSION['user_id'];
 $service_name = $_POST['service_name'];
 $description = $_POST['description'];
 $price = $_POST['price'];
-$duration_minutes = $_POST['duration_minutes']; // NEW FIELD
+$duration_minutes = $_POST['duration_minutes'];
+$status = $_POST['status'] ?? 'Active'; // Capture status
+
+// Validate status
+$allowed_statuses = ['Active', 'Inactive', 'Archived'];
+if (!in_array($status, $allowed_statuses)) {
+    $status = 'Active';
+}
 
 $service_image = null;
 
@@ -30,11 +37,13 @@ if (!empty($_FILES['service_image']['name'])) {
     }
 }
 
+// Interpolate status directly
 $stmt = $conn->prepare("
-    INSERT INTO services (posted_by, service_name, description, service_image, price, duration_minutes, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, NOW())
+    INSERT INTO services (posted_by, service_name, description, service_image, status, price, duration_minutes, created_at)
+    VALUES (?, ?, ?, ?, '$status', ?, ?, NOW())
 ");
 
+// Type string 'isssdi' (posted_by, name, desc, image, price, duration)
 $stmt->bind_param("isssdi", $posted_by, $service_name, $description, $service_image, $price, $duration_minutes);
 
 if ($stmt->execute()) {
