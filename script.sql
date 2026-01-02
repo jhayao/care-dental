@@ -2,7 +2,7 @@
 
 create or replace table booking_items
 (
-    id         bigint unsigned                       not null,
+    id         bigint unsigned auto_increment primary key,
     booking_id bigint unsigned                       not null,
     item_type  enum ('package', 'service')           not null,
     item_id    bigint unsigned                       not null,
