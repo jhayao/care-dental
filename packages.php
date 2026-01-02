@@ -29,7 +29,7 @@ if (isset($_SESSION['flash_message'])) {
 
 <?php include 'header.php'; ?>
 
-<main class="max-w-7xl mx-auto p-6">
+<main class="max-w-7xl mx-auto p-6 flex-1">
     <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">Our Packages</h1>
 
     <?php if ($result->num_rows > 0): ?>

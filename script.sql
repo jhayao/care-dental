@@ -193,3 +193,13 @@ INSERT INTO users (first_name, last_name, address_, email, pword, user_type, sta
 ('Saminodin', 'Admin', 'Admin Address', 'dsaminodin@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'admin', 'Active', NOW(), NOW()),
 ('Fretchel Ann', 'Mahinay', 'Staff Address', 'fretchelannmahinay22@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'staff', 'Active', NOW(), NOW()),
 ('TG', 'Bus', 'Address', 'tgbus@gmail.com', '$2y$12$SDdxu63B99bLG/5cTXeHC.o4w50MhX6OVmDI2e5q/G1P3DGb0PydS', 'staff', 'Active', NOW(), NOW());
+
+create or replace table system_settings
+(
+    id            int auto_increment primary key,
+    setting_key   varchar(50) unique not null,
+    setting_value text               not null
+)
+    collate = utf8mb4_unicode_ci;
+
+INSERT INTO system_settings (setting_key, setting_value) VALUES ('booking_fee', '100');

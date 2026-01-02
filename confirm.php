@@ -63,7 +63,17 @@ if ($user_discount_percent > 0) {
 } elseif (in_array($category, ['Senior','PWD'])) {
     $discount = $subtotal * 0.20;
 }
-$totalAmount = $subtotal - $discount;
+$booking_fee = 0;
+// Fetch Booking Fee
+$stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'booking_fee'");
+$stmt->execute();
+$stmt->bind_result($booking_fee_val);
+if ($stmt->fetch()) {
+    $booking_fee = floatval($booking_fee_val);
+}
+$stmt->close();
+
+$totalAmount = ($subtotal - $discount) + $booking_fee;
 
 /* ---------------- OVERLAP CHECK ---------------- */
 $stmt = mysqli_prepare($conn, "
@@ -93,19 +103,20 @@ mysqli_stmt_close($stmt);
 /* ---------------- INSERT BOOKING (NO BOOKING FEE) ---------------- */
 $stmt = mysqli_prepare($conn, "
     INSERT INTO bookings
-    (user_id, appointment_date, appointment_time, time_slot, duration_minutes, discount, total_amount, status, booking_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+    (user_id, appointment_date, appointment_time, time_slot, duration_minutes, discount, total_amount, booking_fee, status, booking_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
 ");
 mysqli_stmt_bind_param(
     $stmt,
-    "isssidd",
+    "isssiddi",
     $_SESSION['user_id'],  
     $appointment_date,     
     $appointment_time,
     $appointment_time, // time_slot value     
     $total_minutes,        
     $discount,             
-    $totalAmount           
+    $totalAmount,
+    $booking_fee
 );
 
 

@@ -94,9 +94,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div>
                         <label class="text-sm text-gray-600">Password</label>
-                        <input type="password" name="password" required
-                               class="w-full mt-1 p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <div class="mt-1" style="position: relative;">
+                            <input type="password" name="password" id="password" required
+                                   class="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 pr-10">
+                            <button type="button" onclick="togglePassword()"
+                                    style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: none; border: none; cursor: pointer;"
+                                    class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
                     </div>
+
+                    <script>
+                    function togglePassword() {
+                        const passwordInput = document.getElementById('password');
+                        const toggleIcon = document.getElementById('toggleIcon');
+                        
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            toggleIcon.classList.remove('fa-eye');
+                            toggleIcon.classList.add('fa-eye-slash');
+                        } else {
+                            passwordInput.type = 'password';
+                            toggleIcon.classList.remove('fa-eye-slash');
+                            toggleIcon.classList.add('fa-eye');
+                        }
+                    }
+                    </script>
 
                     <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">
                         Login

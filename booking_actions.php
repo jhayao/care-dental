@@ -4,6 +4,7 @@ require_once 'db_connect.php';
 require_once './phpmailer2.php';
 
 header('Content-Type: application/json');
+date_default_timezone_set("Asia/Manila");
 
 /* ------------------ AUTH CHECK ------------------ */
 if (!isset($_SESSION['user_id'])) {
@@ -24,7 +25,7 @@ if (empty($booking_id)) {
 $stmt = $conn->prepare("
     SELECT b.*, u.email, u.first_name, u.last_name
     FROM bookings b
-    JOIN users u ON u.id = b.user_id
+    LEFT JOIN users u ON u.id = b.user_id
     WHERE b.id = ?
 ");
 $stmt->bind_param("i", $booking_id);
@@ -33,7 +34,8 @@ $booking = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$booking) {
-    echo json_encode(['status' => 'error', 'message' => 'Booking not found.']);
+    error_log("Booking not found for ID: " . $booking_id); // Debug Log
+    echo json_encode(['status' => 'error', 'message' => "Booking not found. (ID: $booking_id)"]);
     exit;
 }
 
@@ -80,46 +82,73 @@ if ($action === 'cancel') {
     // 1. Attempt Refund ONLY if we have a valid payment ID and amount
     if (!empty($xendit_payment_id) && $total_amount > 0 && $payment['status'] === 'approved') {
         
-        $apiKey = 'xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'; 
+        // Calculate Refund Amount based on Cancellation Policy
+        $appointmentTimestamp = strtotime($booking['appointment_date'] . ' ' . $booking['appointment_time']);
+        $currentTimestamp = time();
+        $secondsUntilAppointment = $appointmentTimestamp - $currentTimestamp;
+        $hoursUntilAppointment = $secondsUntilAppointment / 3600;
 
-        $refundData = [
-            'invoice_id' => $xendit_payment_id,
-            'reason' => 'REQUESTED_BY_CUSTOMER',
-            'amount' => $total_amount,
-            'currency' => 'PHP'
-        ];
+        $booking_fee = floatval($booking['booking_fee'] ?? 0);
+        $refundAmount = $total_amount;
+        $deduction = 0;
+        $messageDetail = "";
 
-        $ch = curl_init('https://api.xendit.co/refunds');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($refundData),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Basic ' . base64_encode($apiKey . ':')
-            ]
-        ]);
-
-        $response  = curl_exec($ch);
-        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        $refundResponse = json_decode($response, true);
-
-        if ($httpCode >= 200 && $httpCode < 300) {
-            $refundProcessed = true;
-            $refundMessage = "Your payment of PHP " . number_format($total_amount, 2) . " has been refunded.";
+        if ($hoursUntilAppointment > 24) {
+            // More than 24h before: Deduct 50% of booking fee
+            $deduction = $booking_fee * 0.50;
+            $refundAmount = $total_amount - $deduction;
+            $messageDetail = "A deduction of PHP " . number_format($deduction, 2) . " (50% of Booking Fee) was applied as per cancellation policy (> 24 hours).";
         } else {
-             // Optional: Log error but maybe still allow cancellation? 
-             // user requested "pending status should be cancelled anytime". 
-             // If it fails refunding a PAID status, we probably SHOULD stop and warn.
-             // But if it was pending, we wouldn't be in this block.
-             echo json_encode([
-                'status' => 'error',
-                'message' => 'Refund failed: ' . ($refundResponse['message'] ?? 'Unknown error'),
-                'xendit_error' => $refundResponse
+            // Less than or equal to 24h: Forfeit 100% of booking fee
+            $deduction = $booking_fee;
+            $refundAmount = $total_amount - $deduction;
+            $messageDetail = "A deduction of PHP " . number_format($deduction, 2) . " (100% of Booking Fee) was applied as per cancellation policy (<= 24 hours).";
+        }
+
+        // Ensure refund amount is not negative
+        if ($refundAmount < 0) $refundAmount = 0;
+
+        if ($refundAmount > 0) {
+            $apiKey = 'xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'; 
+
+            $refundData = [
+                'invoice_id' => $xendit_payment_id,
+                'reason' => 'REQUESTED_BY_CUSTOMER',
+                'amount' => $refundAmount,
+                'currency' => 'PHP'
+            ];
+
+            $ch = curl_init('https://api.xendit.co/refunds');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($refundData),
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Basic ' . base64_encode($apiKey . ':')
+                ]
             ]);
-            exit;
+
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            $refundResponse = json_decode($response, true);
+
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $refundProcessed = true;
+                $refundMessage = "Your payment check has been processed. Refund Amount: PHP " . number_format($refundAmount, 2) . ". " . $messageDetail;
+            } else {
+                 echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Refund failed: ' . ($refundResponse['message'] ?? 'Unknown error'),
+                    'xendit_error' => $refundResponse
+                ]);
+                exit;
+            }
+        } else {
+             $refundProcessed = true; // Treated as processed even if 0 refund to cancel booking
+             $refundMessage = "No refund was issued as the deduction (PHP " . number_format($deduction, 2) . ") equals or exceeds the total amount. " . $messageDetail;
         }
     }
 
@@ -196,6 +225,24 @@ if ($action === 'reschedule') {
         echo json_encode(['status' => 'error', 'message' => 'New date and time are required.']);
         exit;
     }
+
+    // Validate that the new date is not in the past
+    if (strtotime($new_date) < strtotime(date('Y-m-d'))) {
+        echo json_encode(['status' => 'error', 'message' => 'You cannot reschedule to a past date.']);
+        exit;
+    }
+
+    // NEW: Check Availability in dentist_calendar
+    $checkStmt = $conn->prepare("SELECT id FROM dentist_calendar WHERE available_date = ?");
+    $checkStmt->bind_param("s", $new_date);
+    $checkStmt->execute();
+    $checkStmt->store_result();
+    if ($checkStmt->num_rows === 0) {
+        $checkStmt->close();
+        echo json_encode(['status' => 'error', 'message' => 'The selected date is not available. Please choose another date.']);
+        exit;
+    }
+    $checkStmt->close();
 
     $stmt = $conn->prepare("
         UPDATE bookings

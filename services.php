@@ -34,7 +34,7 @@ if (isset($_SESSION['flash_message'])) {
 
 <?php include 'header.php'; ?>
 
-<main class="py-16 px-2 max-w-6xl mx-auto">
+<main class="py-16 px-2 max-w-6xl mx-auto flex-1">
     <h1 class="text-3xl font-bold text-blue-700 mb-8 text-center">Our Services</h1>
 
     <?php if (count($services) > 0): ?>

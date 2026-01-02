@@ -125,10 +125,20 @@ $query = "
         b.duration_minutes, 
         b.status,
         u.first_name, 
-        u.last_name 
+        u.last_name,
+        (
+            SELECT GROUP_CONCAT(
+                COALESCE(s.service_name, p.package_name) 
+                SEPARATOR ', '
+            ) 
+            FROM booking_items bi 
+            LEFT JOIN services s ON (bi.item_id = s.id AND bi.item_type = 'service') 
+            LEFT JOIN packages p ON (bi.item_id = p.id AND bi.item_type = 'package') 
+            WHERE bi.booking_id = b.id
+        ) as items_availed
     FROM bookings b
     JOIN users u ON b.user_id = u.id
-    WHERE b.status != 'cancelled' 
+    WHERE b.status NOT IN ('cancelled', 'refunded', 'pending')
 ";
 $res = $conn->query($query);
 while ($row = $res->fetch_assoc()) {
@@ -140,7 +150,7 @@ while ($row = $res->fetch_assoc()) {
     $color = '#ffc107'; 
     if ($row['status'] === 'confirmed') $color = '#198754'; 
     elseif ($row['status'] === 'completed') $color = '#0d6efd'; 
-    elseif ($row['status'] === 'cancelled') $color = '#dc3545'; 
+    // cancelled/refunded/pending filtered out, but keeping fallback colors just in case
 
     $events[] = [
         'id' => 'booking_' . $row['id'],
@@ -152,11 +162,13 @@ while ($row = $res->fetch_assoc()) {
             'type' => 'booking',
             'status' => ucfirst($row['status']),
             'patient' => $row['first_name'] . ' ' . $row['last_name'],
+            'items' => $row['items_availed'] ?? 'N/A',
             'start_fmt' => date("h:i A", strtotime($start)),
             'end_fmt' => $endTimeObj->format("h:i A")
         ]
     ];
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -321,6 +333,10 @@ while ($row = $res->fetch_assoc()) {
                 <span class="text-xs text-gray-500 uppercase font-semibold">Status</span>
                 <p id="booking_status" class="text-gray-800"></p>
             </div>
+            <div>
+                <span class="text-xs text-gray-500 uppercase font-semibold">Items Availed</span>
+                <p id="booking_items" class="text-gray-800 text-sm mt-1 bg-gray-50 p-2 rounded"></p>
+            </div>
         </div>
         <div class="flex justify-end">
             <button onclick="closeBookingModal()" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Close</button>
@@ -374,9 +390,14 @@ while ($row = $res->fetch_assoc()) {
     function closePastDateModal() { pastDateModal.classList.add('hidden'); pastDateModal.classList.remove('flex'); }
 
     // Booking Details Modal
-    function showBookingModal(title, status) {
+    function showBookingModal(title, status, items) {
         document.getElementById('booking_patient').textContent = title;
         document.getElementById('booking_status').textContent = status;
+        
+        // Items Display
+        const itemsEl = document.getElementById('booking_items');
+        if (itemsEl) itemsEl.textContent = items;
+
         // Colorize status
         const statusEl = document.getElementById('booking_status');
         statusEl.className = 'font-semibold px-2 py-1 rounded text-sm w-fit ' + (
@@ -476,7 +497,7 @@ while ($row = $res->fetch_assoc()) {
             },
             eventClick: function(info) {
                 if (info.event.extendedProps.type === 'booking') {
-                    showBookingModal(info.event.title, info.event.extendedProps.status);
+                    showBookingModal(info.event.title, info.event.extendedProps.status, info.event.extendedProps.items);
                 } else if (info.event.extendedProps.type === 'slot') {
                     const id = info.event.id;
                     const date = info.event.start.toLocaleDateString();

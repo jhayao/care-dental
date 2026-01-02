@@ -63,75 +63,19 @@ if ($total_minutes <= 0) $total_minutes = 30;
 $hours = floor($total_minutes / 60);
 $minutes = $total_minutes % 60;
 
-/* ================= FETCH DENTIST AVAILABILITY ================= */
-$available_slots = [];
-$stmt = $conn->prepare("SELECT available_date, start_time, end_time FROM dentist_calendar WHERE available_date >= CURDATE() ORDER BY available_date, start_time");
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $available_slots[$row['available_date']][] = [
-        'start' => $row['start_time'],
-        'end'   => $row['end_time']
-    ];
-}
-$stmt->close();
-
-/* ================= FETCH EXISTING BOOKINGS ================= */
-$existing_bookings = [];
-// Filter out cancelled/refunded/rejected bookings so they don't block slots
-$stmt = $conn->prepare("
-    SELECT appointment_date, appointment_time, duration_minutes 
-    FROM bookings 
-    WHERE status NOT IN ('cancelled', 'refunded', 'rejected', 'failed')
-");
-$stmt->execute();
-$result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) {
-    $date = $row['appointment_date'];
-    $duration = ($row['duration_minutes'] > 0) ? $row['duration_minutes'] : 60; // Default to 1 hour if missing
-    $start = strtotime($row['appointment_time']);
-    $end = $start + ($duration * 60);
-    $existing_bookings[$date][] = [
-        'start' => $start,
-        'end'   => $end
-    ];
-}
-$stmt->close();
-
-/* ================= GENERATE AVAILABLE TIMES ================= */
+/* ================= FETCH AVAILABLE DATES FOR CALENDAR HIGHLIGHTING ================= */
+// We only need the dates to color the calendar green. The times are fetched via AJAX.
 $available_times = [];
-foreach ($available_slots as $date => $slots) {
-    foreach ($slots as $slot) {
-        $slot_start = strtotime($date . ' ' . $slot['start']);
-        $slot_end = strtotime($date . ' ' . $slot['end']);
-        $current = $slot_start;
-
-        while (($current + $total_minutes * 60) <= $slot_end) {
-            $current_end = $current + $total_minutes * 60;
-
-            $overlap = false;
-            if (isset($existing_bookings[$date])) {
-                foreach ($existing_bookings[$date] as $b) {
-                    $b_start = strtotime($date . ' ' . $b['start']);
-                    $b_end = strtotime($date . ' ' . $b['end']);
-                    if ($current < $b_end && $current_end > $b_start) {
-                        $overlap = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!$overlap) {
-                $available_times[$date][] = [
-                    'value' => date('H:i', $current),
-                    'text'  => date('h:i A', $current)
-                ];
-            }
-
-            $current += 15 * 60;
-        }
-    }
+$stmt = $conn->prepare("SELECT DISTINCT available_date FROM dentist_calendar WHERE available_date >= CURDATE()");
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    // We set value to true or empty array just to indicate existence
+    $available_times[$row['available_date']] = []; 
 }
+$stmt->close();
+
+
 ?>
 
 <!DOCTYPE html>
@@ -146,7 +90,7 @@ foreach ($available_slots as $date => $slots) {
 <body class="bg-gray-100 font-poppins min-h-screen flex flex-col">
 <?php include 'header.php'; ?>
 
-<main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+<main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
 
 <!-- ================= CART ================= -->
 <div class="md:col-span-2 bg-white shadow rounded-lg p-6">
@@ -257,20 +201,11 @@ function closeModal() {
     .fc-button { font-size: 0.75rem !important; }
 </style>
 <script>
-const availableTimes = <?= json_encode($available_times); ?>;
-console.log('Available Times:', availableTimes); // Debug for Console
+const availableTimes = <?= json_encode($available_times); ?>; // Populated with dates only
+
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('bookingCalendar');
     
-    // Debug info in Time Selection area
-    const timeSection = document.getElementById('timeSelectionSection');
-    const keys = Object.keys(availableTimes);
-    if (keys.length === 0) {
-        timeSection.innerHTML += '<div class="p-2 text-xs text-red-500 bg-red-50 rounded mt-2">Debug: No available dates found from server.</div>';
-    } else {
-        // timeSection.innerHTML += `<div class="p-2 text-xs text-green-500 bg-green-50 rounded mt-2">Debug: Found availability for: ${keys.slice(0, 3).join(', ')}...</div>`;
-    }
-
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -279,49 +214,47 @@ document.addEventListener('DOMContentLoaded', function() {
             right: 'next'
         },
         height: 'auto',
-        // validRange: { start: '<?= date('Y-m-d'); ?>' }, // Use PHP Server Date
+        validRange: { start: '<?= date('Y-m-d'); ?>' },
         dayCellDidMount: function(arg) {
-            // Fix timezone offset issue: FullCalendar arg.date is UTC?
-            // arg.date is a Date object. converting to ISO string might shift day if we are not careful.
-            // Safer to use the data attribute formatting if available, or simple local format.
-            // FullCalendar usually matches local.
-            // Let's us simple trick:
             const date = arg.date;
             const dateStr = date.getFullYear() + "-" + 
                             String(date.getMonth() + 1).padStart(2, '0') + "-" + 
                             String(date.getDate()).padStart(2, '0');
-            
             const cell = arg.el;
             
-            if (availableTimes[dateStr]) {
-                // Available: GREEN
+            // Check if date is in availableTimes (keys are 'YYYY-MM-DD')
+            // Note: availableTimes is an object/array from PHP
+            // Use Object.prototype.hasOwnProperty in case it's an array with string keys
+            if (availableTimes.hasOwnProperty(dateStr) || availableTimes[dateStr] !== undefined) {
                 cell.style.backgroundColor = '#ecfdf5'; // Green-50
                 cell.style.cursor = 'pointer';
             } else {
-                // Unavailable: GRAY
                 cell.style.backgroundColor = '#f3f4f6'; // Gray-100
                 cell.style.pointerEvents = 'none';
                 cell.style.color = '#9ca3af';
             }
         },
         dateClick: function(info) {
-            if (!availableTimes[info.dateStr]) return;
+             // Check availability before doing anything
+             if (!availableTimes.hasOwnProperty(info.dateStr) && availableTimes[info.dateStr] === undefined) {
+                 return;
+             }
 
-            // Reset previous styles (we have to manually track or re-render, 
-            // but just removing the class 'selected-date' and adding it is easier if we keep the CSS for selection)
+            // Reset styles
             document.querySelectorAll('.fc-daygrid-day').forEach(el => {
                  const dStr = el.dataset.date;
-                 if (availableTimes[dStr]) {
-                     el.style.backgroundColor = '#ecfdf5';
-                     el.style.color = '#374151'; // Reset to dark gray
+                 // Re-apply green if available
+                 if (availableTimes.hasOwnProperty(dStr) || availableTimes[dStr] !== undefined) {
+                     el.style.backgroundColor = '#ecfdf5'; // Green-50
+                     el.style.color = '';
                  } else {
-                     el.style.backgroundColor = '#f3f4f6';
+                     el.style.backgroundColor = '#f3f4f6'; // Gray-100
                      el.style.color = '#9ca3af';
                  }
             });
             
-            // Highlight
-            info.dayEl.style.backgroundColor = '#3b82f6'; // Blue
+            // Highlight selected
+            info.dayEl.style.backgroundColor = '#3b82f6'; 
             info.dayEl.style.color = 'white';
 
             const dateInput = document.getElementById('appointment_date');
@@ -330,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateTimes(info.dateStr);
 
             document.getElementById('timeSelectionSection').classList.remove('hidden');
-            document.getElementById('timeSelectionSection').scrollIntoView({ behavior: 'smooth' });
         }
     });
     calendar.render();
@@ -338,13 +270,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function updateTimes(date) {
     const timeSelect = document.getElementById('appointment_time');
-    timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
+    // Show loading or clear
+    timeSelect.innerHTML = '<option value="">Loading...</option>';
     
-    if (availableTimes[date]) {
-        availableTimes[date].forEach(t => {
-            timeSelect.innerHTML += `<option value="${t.value}">${t.text}</option>`;
+    fetch(`get_available_times.php?date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+            timeSelect.innerHTML = '<option value="">-- Select Time --</option>';
+            if (data.length === 0) {
+                 timeSelect.innerHTML += '<option value="" disabled>No available slots</option>';
+            } else {
+                data.forEach(t => {
+                    timeSelect.innerHTML += `<option value="${t.value}">${t.text}</option>`;
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            timeSelect.innerHTML = '<option value="">Error fetching times</option>';
         });
-    }
 }
 </script>
 </body>

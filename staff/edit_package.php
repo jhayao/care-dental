@@ -7,176 +7,168 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$success = '';
-$error = '';
-
 if (!isset($_GET['id'])) {
     header("Location: manage_packages.php");
     exit;
 }
 
-$package_id = intval($_GET['id']);
+$id = intval($_GET['id']);
 
+// Fetch package details
 $stmt = $conn->prepare("SELECT * FROM packages WHERE id = ?");
-$stmt->bind_param("i", $package_id);
+$stmt->bind_param("i", $id);
 $stmt->execute();
-$result = $stmt->get_result();
+$package = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-if ($result->num_rows === 0) {
-    $stmt->close();
+if (!$package) {
+    $_SESSION['error'] = "Package not found.";
     header("Location: manage_packages.php");
     exit;
 }
 
-$package = $result->fetch_assoc();
-$stmt->close();
-
-
-// -------------------------
-// UPDATE PACKAGE LOGIC
-// -------------------------
-if (isset($_POST['update_package'])) {
-    $package_name = $_POST['package_name'];
-    $description  = $_POST['description'];
-    $status       = $_POST['status'];
-    $price        = $_POST['price'] ?: NULL;
-
-    // Convert textarea lines into array
-    $inclusions = array_filter(array_map('trim', preg_split("/\r\n|\n|,/", $_POST['inclusions'])));
-    $inclusions_json = json_encode($inclusions);
-
-    $stmt = $conn->prepare("
-        UPDATE packages 
-        SET package_name = ?, description = ?, inclusions = ?, status = ?, price = ?, updated_at = NOW()
-        WHERE id = ?
-    ");
-    $stmt->bind_param("ssssdi", $package_name, $description, $inclusions_json, $status, $price, $package_id);
-
-    if ($stmt->execute()) {
-        $success = "Package updated successfully!";
-
-        // Refresh displayed data
-        $package['package_name'] = $package_name;
-        $package['description']  = $description;
-        $package['inclusions']   = $inclusions_json;
-        $package['status']       = $status;
-        $package['price']        = $price;
-    } else {
-        $error = "Error updating package: " . $conn->error;
-    }
-
-    $stmt->close();
+// Decode inclusions to array for comparison
+$current_inclusions = json_decode($package['inclusions'], true);
+if (!is_array($current_inclusions)) {
+    // Fallback for old CSV format if any
+    $current_inclusions = array_map('trim', preg_split("/\r\n|\n|,/", $package['inclusions']));
 }
 
-$conn->close();
+// Fetch active services for the checklist
+$stmt = $conn->prepare("SELECT id, service_name, duration_minutes, price FROM services WHERE status = 'Active' ORDER BY service_name ASC");
+$stmt->execute();
+$services = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Edit Package</title>
+<title>Staff - Edit Package</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="../assets/css/main.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
 
 </head>
 <body class="bg-gray-50 font-poppins min-h-screen flex">
 
+<?php include 'sidebar.php'; ?>
 
-    <aside class="w-64 bg-white shadow-lg sticky top-0 h-screen">
-        <?php include 'sidebar.php'; ?>
-    </aside>
+<div class="flex-1 p-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-edit mr-2 text-blue-600"></i> Edit Package
+        </h1>
+        <a href="manage_packages.php" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Back to List
+        </a>
+    </div>
 
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-3xl mx-auto">
+        <form action="update_package.php" method="POST">
+            <input type="hidden" name="id" value="<?= $package['id'] ?>">
+            
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Package Name</label>
+                <input type="text" name="package_name" value="<?= htmlspecialchars($package['package_name']) ?>" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
 
-    <main class="flex-1 p-8 overflow-y-auto">
-        <div class="max-w-3xl mx-auto">
-            <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center">Edit Package</h1>
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Description</label>
+                <textarea name="description" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" required><?= htmlspecialchars($package['description']) ?></textarea>
+            </div>
 
-            <?php if($success): ?>
-                <div id="successModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                    <div class="bg-white rounded-lg p-6 shadow-lg w-96 relative">
-                        <button onclick="document.getElementById('successModal').style.display='none'" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-check-circle text-green-500 text-3xl"></i>
-                            <span class="text-green-700 font-medium text-lg"><?php echo $success; ?></span>
+            <div class="mb-4">
+                <label class="block mb-2 font-semibold">Select Services (Inclusions)</label>
+                <div class="border rounded p-4 max-h-60 overflow-y-auto bg-gray-50">
+                    <?php if (empty($services)): ?>
+                        <p class="text-gray-500">No active services found.</p>
+                    <?php else: ?>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <?php foreach($services as $s): ?>
+                                <?php 
+                                    $isChecked = in_array($s['service_name'], $current_inclusions) ? 'checked' : '';
+                                ?>
+                                <label class="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-100 rounded">
+                                    <input type="checkbox" 
+                                           name="service_ids[]" 
+                                           value="<?= $s['id']; ?>" 
+                                           data-duration="<?= $s['duration_minutes']; ?>" 
+                                           class="service-checkbox w-4 h-4 text-blue-600"
+                                           <?= $isChecked ?>>
+                                    <span class="text-sm">
+                                        <?= htmlspecialchars($s['service_name']); ?> 
+                                        <span class="text-gray-500 text-xs">(<?= $s['duration_minutes']; ?> mins)</span>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+                <p class="text-xs text-gray-500 mt-1">Select the services included in this package. Total duration will be calculated automatically.</p>
+            </div>
 
-            <?php if($error): ?>
-                <div class="bg-red-100 text-red-700 p-3 rounded mb-6 text-center"><?php echo $error; ?></div>
-            <?php endif; ?>
-
-            <form method="POST" class="bg-white shadow-lg rounded-lg p-6 space-y-4">
-
+            <div class="mb-4 grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block mb-1 font-semibold">Total Duration (minutes)</label>
+                    <input type="number" name="duration_minutes" id="duration_minutes" value="<?= $package['duration_minutes'] ?>" class="w-full border px-3 py-2 rounded bg-gray-100 cursor-not-allowed" readonly required>
+                    <div class="text-xs text-blue-600 mt-1 font-medium" id="duration_display">0 minutes</div>
+                </div>
                 <div>
-                    <label class="block font-medium text-gray-700 mb-1">Package Name</label>
-                    <input type="text" name="package_name" required 
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-600"
-                        value="<?php echo htmlspecialchars($package['package_name']); ?>">
+                     <label class="block mb-1 font-semibold">Price</label>
+                     <input type="number" step="0.01" name="price" value="<?= $package['price'] ?>" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
+            </div>
 
-                <div>
-                    <label class="block font-medium text-gray-700 mb-1">Inclusions (one per line)</label>
+            <div class="mb-6">
+                <label class="block mb-1 font-semibold">Status</label>
+                <select name="status" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="Active" <?= $package['status'] == 'Active' ? 'selected' : '' ?>>Active</option>
+                    <option value="Inactive" <?= $package['status'] == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                </select>
+            </div>
 
-                    <textarea name="inclusions" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-600"><?php 
+            <div class="flex justify-end gap-2">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold transition">Update Package</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-                        // Decode JSON inclusions
-                        $incs = json_decode($package['inclusions'], true);
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.service-checkbox');
+    const durationInput = document.getElementById('duration_minutes');
+    const durationDisplay = document.getElementById('duration_display');
 
-                        // If not JSON, fallback to comma/newline string
-                        if (!is_array($incs)) {
-                            $incs = preg_split("/\r\n|\n|,/", $package['inclusions']);
-                        }
+    function calculateTotalDuration() {
+        let total = 0;
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                total += parseInt(cb.getAttribute('data-duration')) || 0;
+            }
+        });
+        durationInput.value = total;
+        
+        // Format display (e.g., 1h 30m)
+        const hours = Math.floor(total / 60);
+        const minutes = total % 60;
+        let displayText = total + " minutes";
+        if (total > 60) {
+            displayText += ` (${hours}h ${minutes}m)`;
+        }
+        durationDisplay.textContent = displayText;
+    }
 
-                        $incs = array_map('trim', $incs);
-                        $incs = array_filter($incs);
-
-                        echo implode("\n", $incs); // Show one per line
-
-                    ?></textarea>
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700 mb-1">Description</label>
-                    <textarea name="description" rows="3" required 
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-600"><?php 
-                        echo htmlspecialchars($package['description']); ?></textarea>
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700 mb-1">Price</label>
-                    <input type="number" name="price" step="0.01"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-600"
-                        value="<?php echo htmlspecialchars($package['price']); ?>">
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700 mb-1">Status</label>
-                    <select name="status" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-600">
-                        <option value="Active"   <?= $package['status']=='Active'?'selected':''; ?>>Active</option>
-                        <option value="Inactive" <?= $package['status']=='Inactive'?'selected':''; ?>>Inactive</option>
-                    </select>
-                </div>
-
-                <div class="flex justify-end space-x-2">
-                    <button type="submit" name="update_package" 
-                        class="bg-gray-800 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold inline-flex items-center space-x-2">
-                        <i class="fas fa-save"></i><span>Save changes</span>
-                    </button>
-
-                    <a href="manage_packages.php" 
-                        class="bg-red-500 hover:bg-gray-300 text-black px-6 py-3 rounded font-semibold inline-flex items-center space-x-2">
-                        <i class="fas fa-times"></i><span>Cancel</span>
-                    </a>
-                </div>
-
-            </form>
-        </div>
-    </main>
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', calculateTotalDuration);
+    });
+    
+    // Initial calculation
+    calculateTotalDuration();
+});
+</script>
 
 </body>
 </html>

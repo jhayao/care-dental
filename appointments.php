@@ -65,11 +65,11 @@ function formatTime12($time) {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 </head>
-<body class="bg-gray-50 font-poppins">
+<body class="bg-gray-50 font-poppins min-h-screen flex flex-col">
 
 <?php include 'header.php'; ?>
 
-<div class="max-w-5xl mx-auto p-6">
+<div class="max-w-5xl mx-auto p-6 flex-1">
     <h1 class="text-3xl font-bold text-blue-700 mb-8 text-center">My Appointments</h1>
 
     <!-- Success message -->
@@ -187,11 +187,43 @@ $end_time = $start_time + ($total_minutes * 60);
     </div>
 </div>
 
+<!-- Cancel Confirmation Modal -->
+<div id="cancelModal" class="fixed inset-0 hidden flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-96 relative text-center">
+        <h2 class="text-xl font-bold mb-2 text-red-600">Cancel Booking</h2>
+        <p class="text-gray-600 mb-6">Are you sure you want to cancel this booking? <br>
+           <span class="text-sm font-semibold text-gray-800">Note: Refunds are subject to cancellation policy.</span>
+        </p>
+
+        <div class="flex justify-center gap-4">
+            <button onclick="closeCancelModal()" class="px-5 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 font-medium">No, Keep</button>
+            <button onclick="confirmCancelBooking()" class="px-5 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentBookingId = null;
 
+let cancelBookingId = null;
+
 function cancelBooking(bookingId) {
-    if (!confirm("Are you sure you want to cancel this booking? Any payment made will be automatically refunded.")) return;
+    cancelBookingId = bookingId;
+    document.getElementById('cancelModal').classList.remove('hidden');
+}
+
+function closeCancelModal() {
+    cancelBookingId = null;
+    document.getElementById('cancelModal').classList.add('hidden');
+}
+
+function confirmCancelBooking() {
+    if (!cancelBookingId) return;
+    
+    const idToCancel = cancelBookingId; // Store valid ID locally
+
+    // Hide modal (this clears the global cancelBookingId)
+    closeCancelModal();
 
     // Show loading
     document.getElementById('loadingOverlay').classList.remove('hidden');
@@ -199,7 +231,7 @@ function cancelBooking(bookingId) {
     fetch('booking_actions.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=cancel&booking_id=${bookingId}`
+        body: `action=cancel&booking_id=${idToCancel}`
     })
     .then(res => res.json())
     .then(data => {
@@ -222,6 +254,10 @@ function cancelBooking(bookingId) {
 function openReschedule(id, date, time) {
     currentBookingId = id;
     document.getElementById('modal_date').value = date;
+    
+    // Prevent past dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('modal_date').setAttribute('min', today);
 
     const timeInput = document.getElementById('modal_time');
     timeInput.value = time;

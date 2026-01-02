@@ -37,7 +37,7 @@ $user = $result->fetch_assoc();
 
 <?php include 'header.php'; ?>
 
-<main class="flex-grow max-w-3xl mx-auto py-16 px-6">
+<main class="flex-grow max-w-3xl mx-auto py-16 px-6 flex-1">
     <h1 class="text-3xl font-bold text-blue-700 mb-8 text-center">Your Profile</h1>
 
     <div class="bg-white shadow rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 gap-4">

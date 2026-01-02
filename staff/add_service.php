@@ -6,49 +6,69 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
-
-$posted_by = $_SESSION['user_id'];
-$service_name = $_POST['service_name'];
-$description = $_POST['description'];
-$price = $_POST['price'];
-$status = $_POST['status']; // Capture status
-$duration_minutes = $_POST['duration_minutes']; 
-
-$service_image = null;
-
-if (!empty($_FILES['service_image']['name'])) {
-
-    $targetDir = "../uploads/services/";
-
-    if (!is_dir($targetDir)) {
-        mkdir($targetDir, 0777, true);
-    }
-
-    $fileName = uniqid() . "_" . basename($_FILES["service_image"]["name"]);
-    $targetFilePath = $targetDir . $fileName;
-
-    if (move_uploaded_file($_FILES["service_image"]["tmp_name"], $targetFilePath)) {
-        $service_image = "uploads/services/" . $fileName;
-    }
-}
-
-$stmt = $conn->prepare("
-    INSERT INTO services (posted_by, service_name, description, service_image, price, duration_minutes, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-");
-
-// Updated bind_param: issssds -> i(int) s(string) s(string) s(string) s(string - status - wait, price is d, duration is i)
-// posted_by(i), service_name(s), description(s), service_image(s), price(d), duration_minutes(i), status(s)
-// Format: isssdis
-$stmt->bind_param("isssdis", $posted_by, $service_name, $description, $service_image, $price, $duration_minutes, $status);
-
-if ($stmt->execute()) {
-    header("Location: services.php?success=1");
-    exit;
-} else {
-    echo "Error: " . $stmt->error;
-}
-
-$stmt->close();
-$conn->close();
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Staff - Add Service</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="../assets/css/main.css" rel="stylesheet">
+
+</head>
+<body class="bg-gray-50 font-poppins min-h-screen flex">
+
+<?php include 'sidebar.php'; ?>
+
+<div class="flex-1 p-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-plus-circle mr-2 text-blue-600"></i> Add Service
+        </h1>
+        <a href="services.php" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Back to List
+        </a>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+        <form action="add_service_action.php" method="POST" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Service Name</label>
+                <input type="text" name="service_name" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Description</label>
+                <textarea name="description" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" required></textarea>
+            </div>
+            <div class="mb-4 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1 font-semibold">Duration (minutes)</label>
+                    <input type="number" name="duration_minutes" min="1" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                     <label class="block mb-1 font-semibold">Price</label>
+                     <input type="number" step="0.01" name="price" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Status</label>
+                <select name="status" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block mb-1 font-semibold">Service Image</label>
+                <input type="file" name="service_image" accept="image/*" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold transition">Save Service</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
