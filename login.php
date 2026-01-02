@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($email === '' || $password === '') {
         $error = 'Please enter both email and password.';
     } else {
-        $stmt = $conn->prepare("SELECT id, first_name, email, pword, user_type FROM users WHERE email = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT id, first_name, email, pword, user_type, status_ FROM users WHERE email = ? LIMIT 1");
         if (!$stmt) {
             die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
         }
@@ -22,23 +22,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($row = $result->fetch_assoc()) {
          
             if (password_verify($password, $row['pword'])) {
-                $_SESSION['user_id'] = $row['id'];
-                $_SESSION['first_name'] = $row['first_name'];
-                $_SESSION['email'] = $row['email'];
-                $_SESSION['user_type'] = $row['user_type'];
 
-                switch ($row['user_type']) {
-                    case 'admin':
-                        header("Location: admin/bookings.php");
-                        exit;
-                    case 'staff':
-                        header("Location: staff/dashboard.php");
-                        exit;
-                    case 'patient':
-                        header("Location: home.php");
-                        exit;
-                    default:
-                        $error = "Unknown user type.";
+                // Check for Archived/Inactive status
+                if ($row['status_'] === 'Archived' || $row['status_'] === 'Inactive') {
+                    $error = "Your account has been deactivated.";
+                } else {
+                    $_SESSION['user_id'] = $row['id'];
+                    $_SESSION['first_name'] = $row['first_name'];
+                    $_SESSION['email'] = $row['email'];
+                    $_SESSION['user_type'] = $row['user_type'];
+
+                    switch ($row['user_type']) {
+                        case 'admin':
+                            header("Location: admin/bookings.php");
+                            exit;
+                        case 'staff':
+                            header("Location: staff/dashboard.php");
+                            exit;
+                        case 'patient':
+                            header("Location: home.php");
+                            exit;
+                        default:
+                            $error = "Unknown user type.";
+                    }
                 }
             } else {
                 $error = "Invalid email or password.";

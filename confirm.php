@@ -80,6 +80,7 @@ $stmt = mysqli_prepare($conn, "
     SELECT appointment_time, duration_minutes
     FROM bookings
     WHERE appointment_date=?
+      AND status NOT IN ('cancelled', 'refunded', 'rejected', 'failed')
 ");
 mysqli_stmt_bind_param($stmt, "s", $appointment_date);
 mysqli_stmt_execute($stmt);
@@ -167,6 +168,8 @@ try {
         die("❌ Payment insert failed: " . mysqli_error($conn));
     }
     mysqli_stmt_close($stmt);
+
+    /* ------------------------------------------------- */
 
     unset($_SESSION['cart']);
 

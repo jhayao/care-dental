@@ -38,7 +38,7 @@ if ($result && $row = $result->fetch_assoc()) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Settings - B-Dental Care</title>
+<title>Booking Fee - B-Dental Care</title>
 <link href="../assets/css/main.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -49,7 +49,7 @@ if ($result && $row = $result->fetch_assoc()) {
 
 <div class="flex-1 p-8">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold text-blue-800 mb-6">System Settings</h1>
+        <h1 class="text-3xl font-bold text-blue-800 mb-6">Booking Fee</h1>
 
         <?php if (isset($_SESSION['success'])): ?>
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 relative">

@@ -43,10 +43,12 @@ function sendEmail($email, $subject, $message) {
         $mail->AltBody = 'This is the plain text message body';
 
         // Send the email
+        // Send the email
         $mail->send();
-        // echo 'Email has been sent successfully.'; // SUCCESS: Silent return for API compatibility
+        return true;
     } catch (Exception $e) {
-        echo "Email could not be sent. Error: {$mail->ErrorInfo}";
+        // error_log("Email Error: {$mail->ErrorInfo}");
+        return false;
     }
 }
 

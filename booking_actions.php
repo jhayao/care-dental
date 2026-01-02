@@ -177,20 +177,19 @@ if ($action === 'cancel') {
     $stmt->close();
 
     /* ---------- EMAILS ---------- */
-    $emailBody = "Your appointment on {$booking_date} at {$booking_time} has been cancelled.\n";
-    if ($refundProcessed) {
-        $emailBody .= $refundMessage . "\n";
-    }
+    require_once 'config.php';
+    require_once 'QStashService.php';
+    
+    // Determine type: refunded or cancelled
+    $type = $refundProcessed ? 'refunded' : 'cancelled';
 
-    $customerMessage = "
-Hello {$full_name},
+    QStashService::schedule(
+        APP_URL . "/webhook_notification.php",
+        ['booking_id' => $booking_id, 'type' => $type],
+        0
+    );
 
-{$emailBody}
-
-Thank you,
-B-Dental Care
-";
-
+    // Notify Admin/Staff
     $adminMessage = "
 Booking Cancelled
 Patient: {$full_name}
@@ -202,7 +201,7 @@ Booking ID: {$booking_id}
          $adminMessage .= "Refunded Amount: PHP " . number_format($total_amount, 2);
     }
 
-    sendEmail($booking['email'], 'Booking Cancelled', $customerMessage);
+    // Notify Admin/Staff (Optional: keep direct or queue as well. Keeping direct for now as it's internal)
     if (!empty($staff['email'])) sendEmail($staff['email'], 'Cancelled Booking', $adminMessage);
     if (!empty($admin['email'])) sendEmail($admin['email'], 'Cancelled Booking', $adminMessage);
 
@@ -253,15 +252,15 @@ if ($action === 'reschedule') {
 
     if ($stmt->execute()) {
 
-        $customerMessage = "
-Hello {$full_name},
-
-Your appointment has been rescheduled to {$new_date} at {$new_time}.
-
-Thank you,
-B-Dental Care
-";
-
+        require_once 'config.php';
+        require_once 'QStashService.php';
+        QStashService::schedule(
+            APP_URL . "/webhook_notification.php",
+            ['booking_id' => $booking_id, 'type' => 'rescheduled'],
+            0
+        );
+        
+        // Admin Notification (Keep direct)
         $adminMessage = "
 Booking Rescheduled
 
@@ -271,7 +270,6 @@ New Time: {$new_time}
 Booking ID: {$booking_id}
 ";
 
-        sendEmail($booking['email'], 'Booking Rescheduled', $customerMessage);
         if (!empty($staff['email'])) sendEmail($staff['email'], 'Rescheduled Booking', $adminMessage);
         if (!empty($admin['email'])) sendEmail($admin['email'], 'Rescheduled Booking', $adminMessage);
 

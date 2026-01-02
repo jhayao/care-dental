@@ -102,7 +102,7 @@ create or replace table bookings
     staff_id         int                                                                                               null,
     booking_date     date                                                                                              not null,
     time_slot        time                                                                                              not null,
-    status           enum ('pending', 'confirmed', 'cancelled', 'rescheduled', 'refunded') default 'pending'           null,
+    status           enum ('pending', 'confirmed', 'cancelled', 'rescheduled', 'refunded', 'completed') default 'pending'           null,
     created_at       datetime                                                              default current_timestamp() not null,
     updated_at       datetime                                                              default current_timestamp() not null on update current_timestamp(),
     booking_fee      decimal(10, 2)                                                        default 50.00               not null,

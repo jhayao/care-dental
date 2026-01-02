@@ -9,7 +9,7 @@
 
 
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 flex flex-col min-h-screen">
     <nav class="bg-white shadow-md py-4 px-6 flex justify-between items-center">
         <div class="flex items-center space-x-3">
             <span class="text-xl font-bold text-blue-700">B-Dental Care</span>
@@ -51,7 +51,7 @@
     </section>
 
    
-    <section id="services" class="py-16 max-w-6xl mx-auto px-6">
+    <!-- <section id="services" class="py-16 max-w-6xl mx-auto px-6">
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Our Services</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -72,10 +72,10 @@
             </div>
 
         </div>
-    </section>
+    </section> -->
 
   
-    <section id="about" class="py-16 bg-gray-100">
+    <!-- <section id="about" class="py-16 bg-gray-100">
         <div class="max-w-5xl mx-auto px-6 text-center">
             <h2 class="text-3xl font-bold text-gray-800 mb-6">About Our Clinic</h2>
             <p class="text-gray-700 text-lg leading-relaxed">
@@ -84,10 +84,10 @@
                 comfortable and satisfied with their dental care.
             </p>
         </div>
-    </section>
+    </section> -->
 
 
-    <section id="contact" class="py-16 max-w-4xl mx-auto px-6">
+    <!-- <section id="contact" class="py-16 max-w-4xl mx-auto px-6">
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Contact Us</h2>
 
         <div class="p-6 rounded-lg text-center">
@@ -95,10 +95,10 @@
             <p class="text-gray-700"><strong>Email:</strong> bdcclinic@gmail.com</p>
             <p class="text-gray-700"><strong>Phone:</strong> 0920-000-0000</p>
         </div>
-    </section>
+    </section> -->
 
 
-    <footer class="bg-blue-600 text-white text-center py-4">
+    <footer class="bg-blue-600 text-white text-center py-4 mt-auto">
         © <?php echo date('Y'); ?> B-Dental Care. All rights reserved.
     </footer>
 

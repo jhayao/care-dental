@@ -243,17 +243,20 @@ function openModal(bookingId) {
             discountDiv.style.display = 'none';
         }
 
-        // Hide Footer Buttons for Cancelled/Refunded
+        // Button Logic
         const confirmBtn = document.getElementById('confirmBtn');
         const completeBtn = document.getElementById('completeBtn');
 
-        if (statusLower === 'cancelled' || statusLower === 'refunded' || statusLower === 'completed') {
-            confirmBtn.style.display = 'none';
-            completeBtn.style.display = 'none';
-        } else {
+        // Reset
+        confirmBtn.style.display = 'none';
+        completeBtn.style.display = 'none';
+
+        if (statusLower === 'pending' || statusLower === 'rescheduled') {
             confirmBtn.style.display = 'inline-block';
-            completeBtn.style.display = 'inline-block';
-        }
+        } else if (statusLower === 'confirmed') {
+            completeBtn.style.display = 'inline-block'; // Only Show Complete
+        } 
+        // Cancelled/Refunded/Completed => Both remain hidden
 
         document.getElementById('viewModal').classList.remove('hidden');
     })

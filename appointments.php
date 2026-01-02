@@ -261,8 +261,9 @@ function openReschedule(id, date, time) {
 
     const timeInput = document.getElementById('modal_time');
     timeInput.value = time;
-    timeInput.min = "13:00";
-    timeInput.max = "16:00";
+    // Removed hardcoded min/max 13:00-16:00
+    // timeInput.min = "09:00"; 
+    // timeInput.max = "17:00";
 
     document.getElementById('resModal').classList.remove('hidden');
 }
@@ -271,12 +272,15 @@ function closeReschedule() {
     document.getElementById('resModal').classList.add('hidden');
 }
 
+// Removed "Please select time between 1:00 PM and 4:00 PM only" validation
+/*
 document.getElementById('modal_time').addEventListener('change', function () {
     if (this.value < this.min || this.value > this.max) {
         alert("Please select time between 1:00 PM and 4:00 PM only.");
         this.value = '';
     }
 });
+*/
 
 function saveReschedule() {
     const newDate = document.getElementById('modal_date').value;

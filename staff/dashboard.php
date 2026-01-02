@@ -109,14 +109,14 @@ function loadDashboard() {
         const pwdCount = data.categories?.PWD || 0;
 
         const cardsData = [
-            { title: 'Total Patients', count: data.totalPatients || 0 },
+            
             { title: 'Regular', count: regularCount },
             { title: 'Senior', count: seniorCount },
             { title: 'PWD', count: pwdCount }
         ];
 
-        // Update grid cols to 4 or flex
-        dashboardCards.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8";
+        // Update grid cols to 3
+        dashboardCards.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8";
 
         cardsData.forEach(({ title, count }, index) => {
             const card = document.createElement('div');
@@ -152,7 +152,11 @@ function loadDashboard() {
         // --- Gender Cards ---
         const genderCards = document.getElementById('genderCards');
         genderCards.innerHTML = '';
-        const genderColors = ['#3b82f6', '#ec4899'];
+        
+        const genderColors = ['#3b82f6', '#ec4899']; // Restored for Chart
+        
+        // Removed per user request
+        /*
         let genderIndex = 0;
         
         // Show Gender Counts explicitly
@@ -173,12 +177,13 @@ function loadDashboard() {
 
              const genderLabel = gender ? gender : 'Not Specified';
 
-             card.innerHTML = `
+              card.innerHTML = `
                 <h3 class="text-lg font-bold" style="color: ${color}">${genderLabel}</h3>
                 <p class="text-3xl font-semibold mt-2 text-gray-800">${count}</p>
             `;
             genderCards.appendChild(card);
         });
+        */
 
         // --- Charts (Patient) ---
         const ctxCat = document.getElementById('categoryChart').getContext('2d');

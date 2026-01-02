@@ -116,7 +116,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         <a href="settings.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-blue-800 group <?= $current_page == 'settings.php' ? 'bg-blue-700 shadow-inner' : '' ?>">
             <i class="fas fa-cogs w-6 text-center mr-3 text-blue-300 group-hover:text-white transition-colors"></i>
-            <span class="font-medium">Settings</span>
+            <span class="font-medium">Booking Fee</span>
         </a>
 
         <a href="profile.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-blue-800 group <?= $current_page == 'profile.php' ? 'bg-blue-700 shadow-inner' : '' ?>">

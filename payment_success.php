@@ -50,6 +50,15 @@ try {
         
         // Refresh local status for display
         $payment['status'] = 'approved';
+
+        // NEW: Queue 'Approved' Email
+        require_once 'config.php';
+        require_once 'QStashService.php';
+        QStashService::schedule(
+            APP_URL . "/webhook_notification.php", 
+            ['booking_id' => $booking_id, 'type' => 'approved'], 
+            0 // Immediate
+        );
     }
 
 } catch (Exception $e) {

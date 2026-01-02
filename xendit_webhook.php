@@ -72,20 +72,14 @@ if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
     $stmt->bind_param("i", $data['booking_id']);
     $stmt->execute();
 
-    // Email
-    $date = date('F j, Y', strtotime($data['appointment_date']));
-    $time = date('g:i a', strtotime($data['appointment_time']));
-    $name = $data['first_name'].' '.$data['last_name'];
-
-    $message = "
-Hello $name,
-
-Your appointment on $date at $time has been confirmed.
-
-Thank you.
-";
-
-    sendEmail($data['email'], 'Booking Confirmed', $message);
+    // Email via QStash
+    require_once 'config.php';
+    require_once 'QStashService.php';
+    QStashService::schedule(
+        APP_URL . "/webhook_notification.php",
+        ['booking_id' => $data['booking_id'], 'type' => 'approved'],
+        0
+    );
 }
 
 // ❌ EXPIRED
