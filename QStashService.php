@@ -1,8 +1,13 @@
 <?php
 
 class QStashService {
-    private static $qstashUrl = 'http://127.0.0.1:8080'; 
+    private static $qstashUrl = null; 
     private static $token = null;
+
+    public static function getUrl() {
+        if (self::$qstashUrl) return self::$qstashUrl;
+        return getenv('QSTASH_URL') ?: ($_ENV['QSTASH_URL'] ?? 'http://127.0.0.1:8080');
+    }
 
     public static function getToken() {
         if (self::$token) return self::$token;
@@ -27,7 +32,7 @@ class QStashService {
      * @return mixed Response from QStash
      */
     public static function schedule($destinationUrl, $payload, $delaySeconds = 0) {
-        $url = self::$qstashUrl . '/v2/publish/' . $destinationUrl;
+        $url = self::getUrl() . '/v2/publish/' . $destinationUrl;
         
         $headers = [
             'Content-Type: application/json',
