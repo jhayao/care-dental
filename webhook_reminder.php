@@ -19,6 +19,7 @@ $stmt = $conn->prepare("
     JOIN users u ON b.user_id = u.id 
     WHERE b.appointment_date = ? 
       AND b.status = 'confirmed'
+      AND (b.reminder_sent = 0 OR b.reminder_sent IS NULL)
 ");
 $stmt->bind_param("s", $tomorrow);
 $stmt->execute();
@@ -51,7 +52,11 @@ while ($booking = $result->fetch_assoc()) {
     
     if ($sent) {
         $count++;
-        // Optional: Log success
+        // Update reminder_sent flag
+        $updateStmt = $conn->prepare("UPDATE bookings SET reminder_sent = 1 WHERE id = ?");
+        $updateStmt->bind_param("i", $booking['id']);
+        $updateStmt->execute();
+        $updateStmt->close();
     } else {
         error_log("Failed to send reminder to " . $booking['email']);
     }
