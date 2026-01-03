@@ -183,7 +183,9 @@ $end_time = $start_time + ($total_minutes * 60);
             <div class="flex gap-3 mt-4">
                 <?php 
                 $statusLower = strtolower($booking['status']); 
-                if ($statusLower !== 'cancelled' && $statusLower !== 'refunded'): ?>
+                if ($statusLower === 'completed'): ?>
+                    <p class="text-green-600 italic font-semibold">Completed</p>
+                <?php elseif ($statusLower !== 'cancelled' && $statusLower !== 'refunded'): ?>
                     <button onclick="cancelBooking(<?= $booking['id'] ?>)" 
                         class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                         Cancel

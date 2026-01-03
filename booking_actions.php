@@ -220,6 +220,12 @@ if ($action === 'reschedule') {
     $new_date = $_POST['new_date'] ?? '';
     $new_time = $_POST['new_time'] ?? '';
 
+    // NEW: Prevent if completed
+    if (strtolower($booking['status']) === 'completed') {
+        echo json_encode(['status' => 'error', 'message' => 'Cannot reschedule a completed appointment.']);
+        exit;
+    }
+
     if (empty($new_date) || empty($new_time)) {
         echo json_encode(['status' => 'error', 'message' => 'New date and time are required.']);
         exit;
