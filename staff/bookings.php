@@ -96,7 +96,7 @@ $(document).ready(function() {
                             </td>
                             <td class="d-flex flex-column gap-2">
                                 <button onclick="openModal(<?= $a['id']; ?>)" class="btn btn-primary btn-sm">View</button>
-                                <?php if ($a['status'] !== 'cancelled' && $a['status'] !== 'refunded' && $a['status'] !== 'pending'): ?>
+                                <?php if ($a['status'] !== 'cancelled' && $a['status'] !== 'refunded' && $a['status'] !== 'pending' && $a['status'] !== 'completed'): ?>
                                     <button onclick="openRescheduleModal('<?= $a['id']; ?>', '<?= $a['appointment_date']; ?>', '<?= $a['appointment_time']; ?>')" class="btn btn-warning btn-sm text-white">Reschedule</button>
                                 <?php endif; ?>
                             </td>
