@@ -145,6 +145,40 @@ $end_time = $start_time + ($total_minutes * 60);
                     <p class="text-gray-500 text-xs uppercase"><?= $item['item_type'] ?></p>
                 </div>
             <?php endforeach; ?>
+            
+            <div class="mt-4 border-t pt-2">
+                <!-- Subtotal calculation -->
+                <?php
+                $subtotal = 0;
+                foreach ($items as $item) {
+                     $details = get_item_details($conn, $item['item_type'], $item['item_id']);
+                     $subtotal += $details['price'] ?? 0;
+                }
+                ?>
+                <div class="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>₱<?= number_format($subtotal, 2) ?></span>
+                </div>
+                
+                <?php if (!empty($booking['discount']) && $booking['discount'] > 0): ?>
+                <div class="flex justify-between text-sm text-yellow-600">
+                    <span>Discount</span>
+                    <span>-₱<?= number_format($booking['discount'], 2) ?></span>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($booking['booking_fee']) && $booking['booking_fee'] > 0): ?>
+                <div class="flex justify-between text-sm">
+                    <span>Booking Fee</span>
+                    <span>₱<?= number_format($booking['booking_fee'], 2) ?></span>
+                </div>
+                <?php endif; ?>
+
+                <div class="flex justify-between font-bold text-lg mt-1 border-t pt-1">
+                    <span>Total Amount</span>
+                    <span>₱<?= number_format($booking['total_amount'], 2) ?></span>
+                </div>
+            </div>
 
             <div class="flex gap-3 mt-4">
                 <?php 

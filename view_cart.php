@@ -54,7 +54,20 @@ if ($user_discount_percent > 0) {
 } elseif ($category === 'Senior' || $category === 'PWD') {
     $discount = $subtotal * 0.20;
 }
-$total = $subtotal - $discount;
+
+// Fetch Booking Fee
+$booking_fee = 0;
+$stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'booking_fee'");
+if ($stmt) {
+    $stmt->execute();
+    $stmt->bind_result($booking_fee_val);
+    if ($stmt->fetch()) {
+        $booking_fee = floatval($booking_fee_val);
+    }
+    $stmt->close();
+}
+
+$total = ($subtotal - $discount) + $booking_fee;
 
 // Ensure minimum duration of 30 mins to prevent logic errors
 if ($total_minutes <= 0) $total_minutes = 30;
@@ -148,6 +161,12 @@ function closeModal() {
         <div class="flex justify-between text-yellow-600">
             <span>Discount (<?= $category ?>)</span>
             <span>-₱<?= number_format($discount,2) ?></span>
+        </div>
+    <?php endif; ?>
+    <?php if ($booking_fee > 0): ?>
+        <div class="flex justify-between">
+            <span>Booking Fee</span>
+            <span>₱<?= number_format($booking_fee,2) ?></span>
         </div>
     <?php endif; ?>
     <div class="flex justify-between font-bold text-lg border-t pt-2">
