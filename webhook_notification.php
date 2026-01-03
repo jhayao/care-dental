@@ -52,7 +52,7 @@ switch ($type) {
 
         Date: $date
         Time: $time
-        Location: B Dental Care Clinic
+        At B Dental Care Clinic
 
         Thank you for choosing us!
         ";
@@ -89,7 +89,7 @@ switch ($type) {
 
         New Date: $date
         New Time: $time
-        Location: B Dental Care Clinic
+        At B Dental Care Clinic
 
         See you then!
         ";

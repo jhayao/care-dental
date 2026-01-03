@@ -41,7 +41,7 @@ while ($booking = $result->fetch_assoc()) {
     Date: $date
     Time: $time
     
-    Location: B Dental Care Clinic
+    At B Dental Care Clinic
 
     If you need to reschedule or cancel, please log in to your account.
 
