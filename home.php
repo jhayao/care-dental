@@ -7,7 +7,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Dental Care - Home</title>
+    <title>B Dental Care - Home</title>
     <link href="./assets/css/main.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
@@ -20,7 +20,7 @@ session_start();
 <section class="text-center py-20 bg-gradient-to-br from-blue-50 to-blue-200 flex-1">
     <img src="img/logo.webp" class="w-40 h-40 mx-auto rounded-full border-4 border-white shadow-lg mb-6">
     <h1 class="text-4xl md:text-5xl font-bold text-blue-700 mb-4">
-        Welcome to B-Dental Care
+        Welcome to B Dental Care
     </h1>
     <p class="max-w-2xl mx-auto text-gray-700 text-lg mb-6">
         Providing quality dental care to keep your smile healthy, bright, and confident.
@@ -47,7 +47,7 @@ session_start();
       
         <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
             <h3 class="text-xl font-semibold mb-2 text-blue-700">Testimonials</h3>
-            <p class="text-gray-600">Hear from our happy patients and see why they trust B-Dental Care with their smiles.</p>
+            <p class="text-gray-600">Hear from our happy patients and see why they trust B Dental Care with their smiles.</p>
         </div>
 
     </div>

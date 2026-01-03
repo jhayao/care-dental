@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Patient Registration - B-Dental Care</title>
+<title>Patient Registration - B Dental Care</title>
 <link href="./assets/css/main.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -299,7 +299,7 @@ function toggleProof(show, labelText = 'Upload ID Proof') {
 <footer class="bg-blue-700 text-white mt-auto py-8">
     <div class="max-w-6xl mx-auto px-4 text-center">
         <div class="mb-6">
-            <h3 class="text-xl font-bold">B-Dental Care</h3>
+            <h3 class="text-xl font-bold">B Dental Care</h3>
             <p class="text-gray-200 text-sm">Quality dental care for a healthy, confident smile.</p>
         </div>
         <div class="mb-6">
@@ -314,7 +314,7 @@ function toggleProof(show, labelText = 'Upload ID Proof') {
             </p>
         </div>
         <div class="border-t border-blue-600 pt-4 text-gray-200 text-sm">
-            © <?php echo date('Y'); ?> B-Dental Care. All rights reserved.
+            © <?php echo date('Y'); ?> B Dental Care. All rights reserved.
         </div>
     </div>
 </footer>

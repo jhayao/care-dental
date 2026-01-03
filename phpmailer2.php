@@ -26,7 +26,7 @@ function sendEmail($email, $subject, $message) {
         $mail->Port       = 587;              // SMTP port
 
         // Sender and recipient
-        $mail->setFrom('dsaminodin@gmail.com','B-Dental Care');
+        $mail->setFrom('dsaminodin@gmail.com','B Dental Care');
 
         if(is_array($email)){
             foreach($email as $e){

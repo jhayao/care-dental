@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Registration - B-Dental Care</title>
+    <title>Staff Registration - B Dental Care</title>
     <link href="../assets/css/main.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <footer class="bg-blue-600 text-white text-center py-4">
-    © <?php echo date('Y'); ?> B-Dental Care. All rights reserved.
+    © <?php echo date('Y'); ?> B Dental Care. All rights reserved.
 </footer>
 
 </body>

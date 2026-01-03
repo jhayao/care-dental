@@ -82,7 +82,7 @@ $stmt->close();
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cart - B-Dental Care</title>
+<title>Cart - B Dental Care</title>
 <link href="./assets/css/main.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 

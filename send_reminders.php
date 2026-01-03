@@ -47,12 +47,12 @@ if ($result->num_rows > 0) {
         $time = date('h:i A', strtotime($row['appointment_time']));
         $date = date('F j, Y', strtotime($row['appointment_date']));
 
-        $subject = "Appointment Reminder - B-Dental Care";
+        $subject = "Appointment Reminder - B Dental Care";
         $message = "
             <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; max-width: 600px; margin: 0 auto;'>
                 <h2 style='color: #2563eb;'>Appointment Reminder</h2>
                 <p>Dear <strong>$name</strong>,</p>
-                <p>This is a friendly reminder that you have an upcoming appointment with B-Dental Care.</p>
+                <p>This is a friendly reminder that you have an upcoming appointment with B Dental Care.</p>
                 <div style='background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;'>
                     <p><strong>Date:</strong> $date</p>
                     <p><strong>Time:</strong> $time</p>
@@ -60,7 +60,7 @@ if ($result->num_rows > 0) {
                 <p>Please arrive at least 15 minutes before your scheduled time.</p>
                 <p>See you soon!</p>
                 <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
-                <p style='color: #666; font-size: 12px;'>B-Dental Care Team</p>
+                <p style='color: #666; font-size: 12px;'>B Dental Care Team</p>
             </div>
         ";
 

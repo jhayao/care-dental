@@ -19,7 +19,7 @@ function sendEmail($email, $subject, $message) {
         
 
         // Sender
-        $mail->setFrom('dsaminodin@gmail.com', 'B-Dental Care');
+        $mail->setFrom('dsaminodin@gmail.com', 'B Dental Care');
 
         // Recipient
         if (is_array($email)) {

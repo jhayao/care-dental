@@ -3,7 +3,7 @@
 
         <!-- Branding -->
         <div class="mb-6">
-            <h3 class="text-xl font-bold">B-Dental Care</h3>
+            <h3 class="text-xl font-bold">B Dental Care</h3>
             <p class="text-gray-200 text-sm">
                 Quality dental care for a healthy, confident smile.
             </p>
@@ -28,7 +28,7 @@
 
         <!-- Copyright -->
         <div class="border-t border-blue-600 pt-4 text-gray-200 text-sm">
-            © <?php echo date('Y'); ?> B-Dental Care. All rights reserved.
+            © <?php echo date('Y'); ?> B Dental Care. All rights reserved.
         </div>
 
     </div>

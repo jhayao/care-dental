@@ -44,7 +44,7 @@ $message = "";
 
 switch ($type) {
     case 'approved':
-        $subject = "Booking Confirmed - B-Dental Care";
+        $subject = "Booking Confirmed - B Dental Care";
         $message = "
         Hi $fullName,
 
@@ -52,14 +52,14 @@ switch ($type) {
 
         Date: $date
         Time: $time
-        Location: B-Dental Care Clinic
+        Location: B Dental Care Clinic
 
         Thank you for choosing us!
         ";
         break;
 
     case 'cancelled':
-        $subject = "Booking Cancelled - B-Dental Care";
+        $subject = "Booking Cancelled - B Dental Care";
         $message = "
         Hi $fullName,
 
@@ -70,7 +70,7 @@ switch ($type) {
         break;
 
     case 'refunded':
-        $subject = "Booking Refunded - B-Dental Care";
+        $subject = "Booking Refunded - B Dental Care";
         $message = "
         Hi $fullName,
 
@@ -81,7 +81,7 @@ switch ($type) {
         break;
 
     case 'rescheduled':
-        $subject = "Booking Rescheduled - B-Dental Care";
+        $subject = "Booking Rescheduled - B Dental Care";
         $message = "
         Hi $fullName,
 
@@ -89,7 +89,7 @@ switch ($type) {
 
         New Date: $date
         New Time: $time
-        Location: B-Dental Care Clinic
+        Location: B Dental Care Clinic
 
         See you then!
         ";

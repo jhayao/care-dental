@@ -32,16 +32,16 @@ while ($booking = $result->fetch_assoc()) {
     $date = date('F j, Y', strtotime($booking['appointment_date']));
     $time = date('g:i A', strtotime($booking['time_slot']));
 
-    $subject = "Appointment Reminder - B-Dental Care";
+    $subject = "Appointment Reminder - B Dental Care";
     $message = "
     Hi $fullName,
 
-    This is a friendly reminder about your upcoming appointment with B-Dental Care tomorrow.
+    This is a friendly reminder about your upcoming appointment with B Dental Care tomorrow.
 
     Date: $date
     Time: $time
     
-    Location: B-Dental Care Clinic
+    Location: B Dental Care Clinic
 
     If you need to reschedule or cancel, please log in to your account.
 
