@@ -22,6 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $end_time = $_POST['end_time'];
 
         if ($from_date && $to_date && $start_time && $end_time) {
+            // Server-side validation for past dates
+            if ($from_date < date('Y-m-d')) {
+                 echo json_encode(['status' => 'error', 'message' => 'Cannot add availability for past dates.']);
+                 exit;
+            }
+
             $begin = new DateTime($from_date);
             $end = new DateTime($to_date);
             $end->modify('+1 day'); 
@@ -513,6 +519,16 @@ while ($row = $res->fetch_assoc()) {
         // ADD Slot Form
         $('#slotForm').submit(function(e){
             e.preventDefault();
+            
+            // Client-side validation for past dates
+            const fromDate = document.getElementById('from_date').value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (fromDate < today) {
+                showAlert('Cannot add availability for past dates.', 'error');
+                return;
+            }
+
             let formData = $(this).serialize();
             $.post('<?= $_SERVER['PHP_SELF']; ?>', formData, function(data){
                 if(data.status === 'success') {
