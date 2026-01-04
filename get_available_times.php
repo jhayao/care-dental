@@ -83,7 +83,15 @@ foreach ($available_slots as $slot) {
     $current = $slot_start;
 
     // We step in 15-minute increments
+    $current_timestamp = time(); // Current server time
     while (($current + $total_minutes * 60) <= $slot_end) {
+
+        // Skip past times
+        if ($current < $current_timestamp) {
+            $current += 15 * 60;
+            continue;
+        }
+
         $current_end = $current + ($total_minutes * 60);
         
         $overlap = false;

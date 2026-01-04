@@ -2,6 +2,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+date_default_timezone_set("Asia/Manila"); // Ensure correct timezone
 
 session_start();
 require_once 'db_connect.php';
@@ -23,6 +24,13 @@ if (!isset($_POST['appointment_date'], $_POST['appointment_time']) || empty($_SE
 
 $appointment_date = $_POST['appointment_date'];
 $appointment_time = $_POST['appointment_time'];
+
+// Validate Past Time
+if (strtotime("$appointment_date $appointment_time") < time()) {
+    $_SESSION['booking_error'] = "❌ Cannot book past time slots.";
+    header("Location: view_cart.php");
+    exit;
+}
 
 $total_minutes = 0;
 $subtotal = 0;
