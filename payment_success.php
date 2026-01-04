@@ -26,7 +26,9 @@ if (!$payment) {
 
 // Check Xendit Status (Fallback if Webhook failed)
 // Use the same key as in confirm.php
-Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'); 
+// Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'); 
+Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+
 $apiInstance = new InvoiceApi();
 
 try {

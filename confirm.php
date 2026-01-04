@@ -138,8 +138,8 @@ foreach ($_SESSION['cart'] as $item) {
 mysqli_stmt_close($stmtItem);
 
 /* ---------------- XENDIT INVOICE ---------------- */
-// Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
-Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3');
+Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+// Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3');
 $invoiceApi = new InvoiceApi();
 
 $invoiceRequest = new CreateInvoiceRequest([

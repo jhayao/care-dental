@@ -59,6 +59,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <span class="font-medium">Bookings</span>
         </a>
 
+        <a href="patients.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-gray-700 group <?= ($current_page == 'patients.php') ? 'bg-gray-700 shadow-inner' : '' ?>">
+            <i class="fas fa-users w-6 text-center mr-3 text-gray-400 group-hover:text-white transition-colors"></i>
+            <span class="font-medium">Patients</span>
+        </a>
+
         <a href="services.php" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 hover:bg-gray-700 group <?= ($current_page == 'services.php') ? 'bg-gray-700 shadow-inner' : '' ?>">
             <i class="fas fa-tooth w-6 text-center mr-3 text-gray-400 group-hover:text-white transition-colors"></i>
             <span class="font-medium">Services</span>
