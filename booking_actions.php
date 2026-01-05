@@ -55,7 +55,7 @@ if (!$payment) {
     exit;
 }
 
-$xendit_payment_id = $payment['xendit_payment_id'];
+$xendit_payment_id = $payment['xendit_invoice_id']; // Use Invoice ID for refunds, not the specific payment ID (ewc_)
 $total_amount     = (float) $payment['total_price'];
 
 /* ------------------ FETCH STAFF & ADMIN ------------------ */
