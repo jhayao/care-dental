@@ -248,7 +248,7 @@ if ($action === 'reschedule') {
     }
     $checkStmt->close();
 
-    // Capture old details for notification
+    // Capture old details for notification (Re-applied)
     $old_date = $booking['appointment_date'];
     $old_time = $booking['time_slot'];
 

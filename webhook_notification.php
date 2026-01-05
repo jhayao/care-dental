@@ -49,7 +49,7 @@ $message = "";
 switch ($type) {
     case 'approved':
         $subject = "Booking Confirmed - B Dental Care";
-        // REQUESTED FORMAT: {Patient_name} have book on {date} at {time}.
+        // REQUESTED FORMAT: {Patient_name} have book on {date} at {time}. (Re-applied)
         $message = "
         Hi $fullName,
 
@@ -83,7 +83,7 @@ switch ($type) {
     case 'rescheduled':
         $subject = "Booking Rescheduled - B Dental Care";
         // REQUESTED FORMAT: reschuele must be like that but for reschueled maybe from original date to new date
-        // {Patient_name} have rescheduled from {old_date} {old_time} to {new_date} {new_time}.
+        // {Patient_name} have rescheduled from {old_date} {old_time} to {new_date} {new_time}. (Re-applied)
         
         $old_date_formatted = $old_date_raw ? date('F j, Y', strtotime($old_date_raw)) : 'Unknown Date';
         $old_time_formatted = $old_time_raw ? date('g:i A', strtotime($old_time_raw)) : 'Unknown Time';
