@@ -191,12 +191,8 @@ if ($action === 'cancel') {
 
     // Notify Admin/Staff
     $adminMessage = "
-Booking Cancelled
-Patient: {$full_name}
-Date: {$booking_date}
-Time: {$booking_time}
-Booking ID: {$booking_id}
-";
+    $full_name have cancelled booking on $booking_date at $booking_time.
+    ";
     if ($refundProcessed) {
          $adminMessage .= "Refunded Amount: PHP " . number_format($total_amount, 2);
     }
@@ -275,14 +271,12 @@ if ($action === 'reschedule') {
         );
         
         // Admin Notification (Keep direct)
-        $adminMessage = "
-Booking Rescheduled
+        $old_date_formatted = $old_date ? date('F j, Y', strtotime($old_date)) : 'Unknown Date';
+        $old_time_formatted = $old_time ? date('g:i A', strtotime($old_time)) : 'Unknown Time';
 
-Patient: {$full_name}
-New Date: {$new_date}
-New Time: {$new_time}
-Booking ID: {$booking_id}
-";
+        $adminMessage = "
+        $full_name have rescheduled from $old_date_formatted $old_time_formatted to $new_date $new_time.
+        ";
 
         if (!empty($recipients)) sendEmail($recipients, 'Rescheduled Booking', $adminMessage);
 

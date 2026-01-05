@@ -100,13 +100,13 @@ if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
         // In `booking_actions.php` line 59, it uses `p.total_price`.
         
         $adminSubject = "New Payment Received - Booking #{$data['booking_id']}";
+        
+        $patientName = $data['first_name'] . ' ' . $data['last_name'];
+        $bookDate = date('F j, Y', strtotime($data['appointment_date']));
+        $bookTime = date('g:i A', strtotime($data['appointment_time']));
+
         $adminMessage = "
-            <h3>New Payment Received</h3>
-            <p><strong>Patient:</strong> {$data['first_name']} {$data['last_name']}</p>
-            <p><strong>Date:</strong> " . date('F j, Y', strtotime($data['appointment_date'])) . "</p>
-            <p><strong>Time:</strong> " . date('g:i A', strtotime($data['appointment_time'])) . "</p>
-            <p><strong>Amount:</strong> PHP {$amountFmt}</p>
-            <p><strong>Reference:</strong> {$xenditInvoiceId}</p>
+        $patientName have book on $bookDate at $bookTime.
         ";
         
         sendEmail($recipients, $adminSubject, $adminMessage);
