@@ -70,13 +70,11 @@ switch ($type) {
         break;
 
     case 'refunded':
-        $subject = "Booking Refunded - B Dental Care";
+        $subject = "Booking Cancelled - B Dental Care";
         $message = "
         Hi $fullName,
 
         Your appointment on $date at $time has been cancelled and a refund has been processed.
-
-        Please allow 5-10 business days for the amount to reflect in your account depending on your bank's policy.
         ";
         break;
 

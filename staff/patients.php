@@ -65,9 +65,7 @@ $stmt->close();
     <div class="max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold text-blue-700">Patients</h1>
-            <button onclick="openAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold shadow flex items-center gap-2">
-                <i class="fas fa-plus"></i> Add Patient
-            </button>
+
         </div>
 
         <?php if ($msg): ?>
