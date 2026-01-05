@@ -119,7 +119,6 @@ if ($action === 'cancel') {
                 'amount' => $refundAmount,
                 'currency' => 'PHP'
             ];
-            echo json_encode($refundData);
 
             $ch = curl_init('https://api.xendit.co/refunds');
             curl_setopt_array($ch, [
