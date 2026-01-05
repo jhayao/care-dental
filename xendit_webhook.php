@@ -99,7 +99,7 @@ if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
         // Wait, looking at `xendit_webhook.php` line 26-33, it fetches `p.*`.
         // In `booking_actions.php` line 59, it uses `p.total_price`.
         
-        $adminSubject = "New Payment Received - Booking #{$data['booking_id']}";
+        $adminSubject = "Customer Booking - Booking #{$data['booking_id']}";
         
         $patientName = $data['first_name'] . ' ' . $data['last_name'];
         $bookDate = date('F j, Y', strtotime($data['appointment_date']));
