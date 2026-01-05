@@ -248,6 +248,10 @@ if ($action === 'reschedule') {
     }
     $checkStmt->close();
 
+    // Capture old details for notification
+    $old_date = $booking['appointment_date'];
+    $old_time = $booking['time_slot'];
+
     $stmt = $conn->prepare("
         UPDATE bookings
         SET appointment_date = ?, appointment_time = ?, time_slot = ?, status = 'rescheduled'
@@ -261,7 +265,12 @@ if ($action === 'reschedule') {
         require_once 'QStashService.php';
         QStashService::schedule(
             APP_URL . "/webhook_notification.php",
-            ['booking_id' => $booking_id, 'type' => 'rescheduled'],
+            [
+                'booking_id' => $booking_id, 
+                'type' => 'rescheduled',
+                'old_date' => $old_date,
+                'old_time' => $old_time
+            ],
             0
         );
         

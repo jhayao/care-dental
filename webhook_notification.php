@@ -16,6 +16,10 @@ if (!$data) {
 $booking_id = $data['booking_id'] ?? null;
 $type = $data['type'] ?? '';
 
+// Check if old_date and old_time are passed for reschedule
+$old_date_raw = $data['old_date'] ?? null;
+$old_time_raw = $data['old_time'] ?? null;
+
 if (!$booking_id || !$type) {
     http_response_code(400); die("Missing parameters");
 }
@@ -45,15 +49,13 @@ $message = "";
 switch ($type) {
     case 'approved':
         $subject = "Booking Confirmed - B Dental Care";
+        // REQUESTED FORMAT: {Patient_name} have book on {date} at {time}.
         $message = "
         Hi $fullName,
 
-        Your appointment has been successfully confirmed!
-
-        Date: $date
-        Time: $time
+        $fullName have book on $date at $time.
+        
         At B Dental Care Clinic
-
         Thank you for choosing us!
         ";
         break;
@@ -80,15 +82,18 @@ switch ($type) {
 
     case 'rescheduled':
         $subject = "Booking Rescheduled - B Dental Care";
+        // REQUESTED FORMAT: reschuele must be like that but for reschueled maybe from original date to new date
+        // {Patient_name} have rescheduled from {old_date} {old_time} to {new_date} {new_time}.
+        
+        $old_date_formatted = $old_date_raw ? date('F j, Y', strtotime($old_date_raw)) : 'Unknown Date';
+        $old_time_formatted = $old_time_raw ? date('g:i A', strtotime($old_time_raw)) : 'Unknown Time';
+
         $message = "
         Hi $fullName,
 
-        Your appointment has been successfully rescheduled.
-
-        New Date: $date
-        New Time: $time
+        $fullName have rescheduled from $old_date_formatted $old_time_formatted to $date $time.
+        
         At B Dental Care Clinic
-
         See you then!
         ";
         break;
