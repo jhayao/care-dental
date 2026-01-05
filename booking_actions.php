@@ -59,17 +59,15 @@ $xendit_payment_id = $payment['xendit_invoice_id']; // Use Invoice ID for refund
 $total_amount     = (float) $payment['total_price'];
 
 /* ------------------ FETCH STAFF & ADMIN ------------------ */
-$staff = $conn->query("
+$recipients = [];
+$query = $conn->query("
     SELECT email FROM users 
-    WHERE user_type = 'staff' AND status_ = 'Active' 
-    LIMIT 1
-")->fetch_assoc();
+    WHERE user_type IN ('staff', 'admin') AND status_ = 'Active' 
+");
 
-$admin = $conn->query("
-    SELECT email FROM users 
-    WHERE user_type = 'admin' AND status_ = 'Active' 
-    LIMIT 1
-")->fetch_assoc();
+while ($row = $query->fetch_assoc()) {
+    $recipients[] = $row['email'];
+}
 
 /* ==========================================================
    CANCEL BOOKING + REFUND
@@ -204,8 +202,7 @@ Booking ID: {$booking_id}
     }
 
     // Notify Admin/Staff (Optional: keep direct or queue as well. Keeping direct for now as it's internal)
-    if (!empty($staff['email'])) sendEmail($staff['email'], 'Cancelled Booking', $adminMessage);
-    if (!empty($admin['email'])) sendEmail($admin['email'], 'Cancelled Booking', $adminMessage);
+    if (!empty($recipients)) sendEmail($recipients, 'Cancelled Booking', $adminMessage);
 
     echo json_encode([
         'status' => 'success',
@@ -278,8 +275,7 @@ New Time: {$new_time}
 Booking ID: {$booking_id}
 ";
 
-        if (!empty($staff['email'])) sendEmail($staff['email'], 'Rescheduled Booking', $adminMessage);
-        if (!empty($admin['email'])) sendEmail($admin['email'], 'Rescheduled Booking', $adminMessage);
+        if (!empty($recipients)) sendEmail($recipients, 'Rescheduled Booking', $adminMessage);
 
         echo json_encode(['status' => 'success', 'message' => 'Booking rescheduled successfully.']);
     } else {

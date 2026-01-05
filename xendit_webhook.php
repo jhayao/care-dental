@@ -72,6 +72,7 @@ if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
     $stmt->bind_param("i", $data['booking_id']);
     $stmt->execute();
 
+
     // Email via QStash
     require_once 'config.php';
     require_once 'QStashService.php';
@@ -80,6 +81,36 @@ if ($paymentStatus === 'PAID' || $paymentStatus === 'SETTLED') {
         ['booking_id' => $data['booking_id'], 'type' => 'approved'],
         0
     );
+
+    // NEW: Notify all Admins & Staff about the new payment
+    $recipients = [];
+    $staffQuery = $conn->query("SELECT email FROM users WHERE user_type IN ('admin', 'staff') AND status_ = 'Active'");
+    while ($row = $staffQuery->fetch_assoc()) {
+        $recipients[] = $row['email'];
+    }
+
+    if (!empty($recipients)) {
+        $amountFmt = number_format($data['total_price'], 2); // Assuming `total_price` exists in `payments` or fetched via JOIN if needed. 
+        // Note: The initial query fetched `p.*`. Let's ensure `total_price` is there. 
+        // The query `SELECT p.* ... FROM payments p ...` should have it. 
+        // If not, we might need to rely on what `p` has.
+        // `payments` table likely has `amount` or `total_price`.
+        // Let's assume `total_price` based on `booking_actions.php` usage: `$total_amount = (float) $payment['total_price'];`
+        // Wait, looking at `xendit_webhook.php` line 26-33, it fetches `p.*`.
+        // In `booking_actions.php` line 59, it uses `p.total_price`.
+        
+        $adminSubject = "New Payment Received - Booking #{$data['booking_id']}";
+        $adminMessage = "
+            <h3>New Payment Received</h3>
+            <p><strong>Patient:</strong> {$data['first_name']} {$data['last_name']}</p>
+            <p><strong>Date:</strong> " . date('F j, Y', strtotime($data['appointment_date'])) . "</p>
+            <p><strong>Time:</strong> " . date('g:i A', strtotime($data['appointment_time'])) . "</p>
+            <p><strong>Amount:</strong> PHP {$amountFmt}</p>
+            <p><strong>Reference:</strong> {$xenditInvoiceId}</p>
+        ";
+        
+        sendEmail($recipients, $adminSubject, $adminMessage);
+    }
 }
 
 // ❌ EXPIRED
