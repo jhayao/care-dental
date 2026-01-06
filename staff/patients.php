@@ -116,9 +116,14 @@ $stmt->close();
                             <td><?= date('M d, Y', strtotime($p['created_at'])); ?></td>
                             <td>
                                 <?php if($p['status_'] !== 'Archived'): ?>
-                                <button class="btn btn-sm btn-outline-danger" onclick="updateUserStatus(<?= $p['id']; ?>, 'archive')">
-                                    <i class="fas fa-archive"></i>
-                                </button>
+                                <div class="flex gap-1">
+                                    <a href="view_patient.php?id=<?= $p['id']; ?>" class="btn btn-sm btn-outline-primary" title="View Record">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="updateUserStatus(<?= $p['id']; ?>, 'archive')" title="Archive User">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
+                                </div>
                                 <?php else: ?>
                                 <button class="btn btn-sm btn-outline-success" onclick="updateUserStatus(<?= $p['id']; ?>, 'unarchive')">
                                     <i class="fas fa-box-open"></i>

@@ -31,6 +31,9 @@ $cart_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
         <a href="appointments.php" class="hover:text-blue-600 flex items-center space-x-1">
              Appointments
         </a>
+        <a href="payments.php" class="hover:text-blue-600 flex items-center space-x-1">
+             Payments
+        </a>
 
         <a href="view_cart.php" class="relative hover:text-blue-600 flex items-center space-x-1">
             <i class="fas fa-shopping-cart text-xl"></i>

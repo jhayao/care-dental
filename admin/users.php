@@ -115,10 +115,15 @@ $stmt->close();
                         <td class="border px-4 py-2"><?= date('M d, Y', strtotime($p['created_at'])); ?></td>
                         <td class="border px-4 py-2">
                             <?php if($p['status_'] !== 'Archived'): ?>
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 archive-btn"
-                                onclick="updateUserStatus(<?= $p['id']; ?>, 'archive')">
-                                <i class="fas fa-archive"></i> Archive
-                            </button>
+                            <div class="flex gap-1">
+                                <a href="view_patient.php?id=<?= $p['id']; ?>" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 font-semibold text-xs transition duration-200">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 archive-btn"
+                                    onclick="updateUserStatus(<?= $p['id']; ?>, 'archive')">
+                                    <i class="fas fa-archive"></i> Archive
+                                </button>
+                            </div>
                             <?php else: ?>
                             <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 unarchive-btn"
                                 onclick="updateUserStatus(<?= $p['id']; ?>, 'unarchive')">
