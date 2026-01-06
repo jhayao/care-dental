@@ -49,11 +49,11 @@ $message = "";
 switch ($type) {
     case 'approved':
         $subject = "Booking Confirmed - B Dental Care";
-        // REQUESTED FORMAT: {Patient_name} have book on {date} at {time}. (Re-applied)
+        // REQUESTED FORMAT: You have successfully book an appointment on {date} at {time}.
         $message = "
         Hi $fullName,
 
-        $fullName have book on $date at $time.
+        You have successfully booked an appointment on $date at $time.
         
         At B Dental Care Clinic
         Thank you for choosing us!
@@ -82,20 +82,32 @@ switch ($type) {
 
     case 'rescheduled':
         $subject = "Booking Rescheduled - B Dental Care";
-        // REQUESTED FORMAT: reschuele must be like that but for reschueled maybe from original date to new date
-        // {Patient_name} have rescheduled from {old_date} {old_time} to {new_date} {new_time}. (Re-applied)
         
         $old_date_formatted = $old_date_raw ? date('F j, Y', strtotime($old_date_raw)) : 'Unknown Date';
         $old_time_formatted = $old_time_raw ? date('g:i A', strtotime($old_time_raw)) : 'Unknown Time';
-
-        $message = "
-        Hi $fullName,
-
-        $fullName have rescheduled from $old_date_formatted $old_time_formatted to $date $time.
         
-        At B Dental Care Clinic
-        See you then!
-        ";
+        $initiator = $data['initiator'] ?? 'patient'; // default to patient if not set
+
+        if ($initiator === 'admin' || $initiator === 'staff') {
+             $message = "
+            Hi $fullName,
+
+            Your appointment has been rescheduled by our staff from $old_date_formatted $old_time_formatted to $date $time.
+            
+            At B Dental Care Clinic
+            See you then!
+            ";
+        } else {
+             // Patient initiated
+             $message = "
+            Hi $fullName,
+
+            You have successfully rescheduled your appointment from $old_date_formatted $old_time_formatted to $date $time.
+            
+            At B Dental Care Clinic
+            See you then!
+            ";
+        }
         break;
 
     default:

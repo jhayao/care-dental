@@ -265,7 +265,8 @@ if ($action === 'reschedule') {
                 'booking_id' => $booking_id, 
                 'type' => 'rescheduled',
                 'old_date' => $old_date,
-                'old_time' => $old_time
+                'old_time' => $old_time,
+                'initiator' => 'patient'
             ],
             0
         );
