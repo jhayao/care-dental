@@ -116,7 +116,7 @@ $stmt->close();
                         <td class="border px-4 py-2">
                             <?php if($p['status_'] !== 'Archived'): ?>
                             <div class="flex gap-1">
-                                <a href="view_patient.php?id=<?= $p['id']; ?>" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1 font-semibold text-xs transition duration-200">
+                                <a href="view_patient.php?id=<?= $p['id']; ?>" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 font-semibold text-xs transition duration-200">
                                     <i class="fas fa-eye"></i> View
                                 </a>
                                 <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 archive-btn"
