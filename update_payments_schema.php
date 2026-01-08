@@ -29,3 +29,12 @@ try {
     echo "NOTE due_date: " . $e->getMessage() . "<br>";
 }
 ?>
+
+<?php
+try {
+    $conn->query("ALTER TABLE payments ADD COLUMN installment_number INT DEFAULT 0 NULL");
+    echo "SUCCESS: installment_number column added.<br>";
+} catch (Exception $e) {
+    echo "NOTE installment_number: " . $e->getMessage() . "<br>";
+}
+?>
