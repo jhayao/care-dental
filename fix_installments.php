@@ -20,7 +20,7 @@ $remaining = $total_booking_val - $amount_paid_now;
 
 echo "Total: $total_booking_val, Paid: $amount_paid_now, Remaining: $remaining <br>";
 
-if ($remaining > 100) {
+if ($remaining > 0) {
      // Find max months
      $max_months = 0;
      $q_pkg = $conn->query("SELECT p.installment_months FROM booking_items bi JOIN packages p ON bi.item_id = p.id WHERE bi.booking_id = $booking_id AND bi.item_type='package'");
