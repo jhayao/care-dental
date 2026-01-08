@@ -101,14 +101,16 @@ $payments_result = $stmt->get_result();
                                     <td class="py-3 px-4">
                                         <?php 
                                             $status = strtolower($row['status']);
-                                            if ($status === 'pending' && !empty($row['payment_url'])) {
-                                                echo '<a href="'. htmlspecialchars($row['payment_url']) .'" target="_blank" class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded-md text-xs font-bold shadow transition animate-pulse">Pay Now</a>';
-                                            } elseif ($status === 'scheduled') {
-                                                echo '<span class="bg-gray-200 text-gray-600 py-1 px-3 rounded-full text-xs font-bold">Scheduled</span>';
+                                            
+                                            // Allow payment for Pending or Scheduled
+                                            if ($status === 'pending' || $status === 'scheduled') {
+                                                // If we have a direct link for pending, use it? 
+                                                // Or just route everything through pay_installment.php for consistency?
+                                                // Let's route through pay_installment.php so it handles generation if needed.
+                                                echo '<a href="pay_installment.php?id='. $row['id'] .'" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md text-xs font-bold shadow transition">Pay Now</a>';
                                             } else {
                                                 $statusColor = match($status) {
                                                     'paid', 'approved', 'completed' => 'bg-green-100 text-green-700 border border-green-200',
-                                                    'pending' => 'bg-yellow-100 text-yellow-700 border border-yellow-200',
                                                     'failed', 'declined', 'cancelled' => 'bg-red-100 text-red-700 border border-red-200',
                                                     default => 'bg-gray-100 text-gray-700 border border-gray-200'
                                                 };

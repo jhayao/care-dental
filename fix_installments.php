@@ -52,12 +52,8 @@ if ($remaining > 100) {
                  $sched_pay_id = $stmt_sched->insert_id;
                  echo "Created Installment #$i (ID: $sched_pay_id) - Due: $due_date <br>";
                  
-                 // Schedule QStash
-                 $delay = strtotime($due_date) - time();
-                 if ($delay < 0) $delay = 0;
-                 
-                 QStashService::schedule(APP_URL . "/process_scheduled_payment.php", ['payment_id' => $sched_pay_id], $delay);
-                 echo " -> Scheduled QStash (+{$delay}s)<br>";
+                 // QStash logic removed.
+                 echo " -> No QStash scheduled (On-demand mode)<br>";
              } else {
                  echo "Error creating installment #$i: " . $stmt_sched->error . "<br>";
              }

@@ -129,19 +129,7 @@ try {
                      $stmt_sched->execute();
                      $sched_pay_id = $stmt_sched->insert_id;
                      
-                     // Schedule QStash Trigger
-                     // Calculate delay in seconds. 
-                     // For demo purposes, maybe shorten it? No, stick to real time: +30 days * $i
-                     $delay = $i * 30 * 24 * 3600; 
-                     // Or better: $delay = strtotime($due_date) - time();
-                     $delay = strtotime($due_date) - time();
-                     if ($delay < 0) $delay = 0;
-                     
-                     QStashService::schedule(
-                        APP_URL . "/process_scheduled_payment.php",
-                        ['payment_id' => $sched_pay_id],
-                        $delay
-                     );
+                     // QStash setup removed.
                  }
                  $stmt_sched->close();
              }
