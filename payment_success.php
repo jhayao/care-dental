@@ -79,7 +79,7 @@ try {
         $amount_paid_now = $payment['total_price'];
         $remaining = $total_booking_val - $amount_paid_now;
         
-        if ($remaining > 100) { // If significant remaining balance > 100 PHP
+        if ($remaining > 0) { // If any remaining balance
              // Find the MAX installment term from the bought items
              // If multiple items, we usually just take the max term or average? 
              // Simplest: Check if any item has installment_months > 0.
