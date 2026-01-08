@@ -76,16 +76,27 @@ $stmt->close();
                 <p class="text-xs text-gray-500 mt-1">Select the services included in this package. Total duration will be calculated automatically.</p>
             </div>
 
-            <div class="mb-4 grid grid-cols-2 gap-4">
+            <div class="mb-4 grid grid-cols-3 gap-4">
                 <div class="relative">
                     <label class="block mb-1 font-semibold">Total Duration (minutes)</label>
                     <input type="number" name="duration_minutes" id="duration_minutes" class="w-full border px-3 py-2 rounded bg-gray-100 cursor-not-allowed" readonly required>
                     <div class="text-xs text-blue-600 mt-1 font-medium" id="duration_display">0 minutes</div>
                 </div>
                 <div>
-                     <label class="block mb-1 font-semibold">Price</label>
+                     <label class="block mb-1 font-semibold">Price (Total)</label>
                      <input type="number" step="0.01" name="price" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
+                <div>
+                     <label class="block mb-1 font-semibold text-gray-700">Down Payment (Optional)</label>
+                     <input type="number" step="0.01" name="down_payment" value="0" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                     <p class="text-xs text-gray-500 mt-1">Initial payment.</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                 <label class="block mb-1 font-semibold text-blue-700">Installment Term (Months)</label>
+                 <input type="number" name="installment_months" min="0" max="24" value="0" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. 6">
+                 <p class="text-xs text-gray-500 mt-1">Set to 0 for one-time payment. If > 0, the remaining balance will be split automatically.</p>
             </div>
 
             <div class="mb-6">

@@ -130,22 +130,41 @@ $stmt->close();
                             <th class="px-6 py-3">ID</th>
                             <th class="px-6 py-3">Date</th>
                             <th class="px-6 py-3">Time</th>
-                            <th class="px-6 py-3">Service Type</th> <!-- Assuming simple display or logic needed -->
                             <th class="px-6 py-3">Total</th>
+                            <th class="px-6 py-3">Paid</th>
+                            <th class="px-6 py-3">Balance</th>
                             <th class="px-6 py-3">Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach($bookings as $b): ?>
+                        <?php 
+                        // Pre-calculate payments per booking
+                        $paid_map = [];
+                        foreach ($payments as $p) {
+                            if (in_array($p['status'], ['approved', 'paid', 'completed'])) {
+                                if (!isset($paid_map[$p['booking_id']])) $paid_map[$p['booking_id']] = 0;
+                                $paid_map[$p['booking_id']] += $p['total_price'];
+                            }
+                        }
+
+                        foreach($bookings as $b): 
+                            $paid = $paid_map[$b['id']] ?? 0;
+                            $balance = $b['total_amount'] - $paid;
+                            if ($balance < 0) $balance = 0; // Should not happen ideally
+                        ?>
                         <tr class="bg-white border-b hover:bg-gray-50">
-                            <td class="px-6 py-4 font-medium text-gray-900">#<?= $b['id'] ?></td>
+                            <td class="px-6 py-4 font-medium text-gray-900">
+                                #<?= $b['id'] ?>
+                                <br>
+                                <button onclick="viewBookingItems(<?= $b['id'] ?>)" class="text-xs text-blue-600 hover:underline">View Items</button>
+                            </td>
                             <td class="px-6 py-4"><?= date('M d, Y', strtotime($b['appointment_date'])) ?></td>
                             <td class="px-6 py-4"><?= date('h:i A', strtotime($b['appointment_time'])) ?></td>
-                            <td class="px-6 py-4">
-                                <!-- Logic to fetch items or just generic -->
-                                <button onclick="viewBookingItems(<?= $b['id'] ?>)" class="text-blue-600 hover:underline">View Items</button>
-                            </td>
                             <td class="px-6 py-4 font-semibold text-gray-900">₱<?= number_format($b['total_amount'], 2) ?></td>
+                            <td class="px-6 py-4 text-green-600">₱<?= number_format($paid, 2) ?></td>
+                            <td class="px-6 py-4 font-bold <?= $balance > 0 ? 'text-red-600' : 'text-gray-500' ?>">
+                                ₱<?= number_format($balance, 2) ?>
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 font-semibold leading-tight rounded-full 
                                     <?= match(strtolower($b['status'])) {
@@ -163,37 +182,54 @@ $stmt->close();
                 </table>
             </div>
 
+
             <!-- Payments Tab -->
             <div class="hidden bg-white rounded-lg shadow-md p-6" id="payments" role="tabpanel" aria-labelledby="payments-tab">
+                 
+                 <!-- Installment Button -->
+                 <div class="mb-4 flex justify-end">
+                     <button onclick="document.getElementById('paymentModal').classList.remove('hidden')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 transition">
+                         <i class="fas fa-plus-circle"></i> Create Payment Request
+                     </button>
+                 </div>
+
                  <table id="paymentsTable" class="w-full text-sm text-left text-gray-500">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th class="px-6 py-3">Payment ID</th>
                             <th class="px-6 py-3">Date</th>
                             <th class="px-6 py-3">Booking ID</th>
-                            <th class="px-6 py-3">Method</th>
+                            <th class="px-6 py-3">Description</th>
                             <th class="px-6 py-3">Amount</th>
                             <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Link</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach($payments as $p): ?>
                         <tr class="bg-white border-b hover:bg-gray-50">
                             <td class="px-6 py-4 font-medium text-gray-900">#<?= $p['id'] ?></td>
-                            <td class="px-6 py-4"><?= date('M d, Y h:i A', strtotime($p['payment_date'])) ?></td>
+                            <td class="px-6 py-4"><?= date('M d, Y', strtotime($p['payment_date'])) ?></td>
                             <td class="px-6 py-4 text-blue-600">#<?= $p['booking_id'] ?></td>
-                            <td class="px-6 py-4"><?= htmlspecialchars($p['payment_method']) ?></td>
+                            <td class="px-6 py-4"><?= !empty($p['description']) ? htmlspecialchars($p['description']) : 'Standard' ?></td>
                             <td class="px-6 py-4 font-bold text-green-600">₱<?= number_format($p['total_price'], 2) ?></td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 font-semibold leading-tight rounded-full 
                                     <?= match(strtolower($p['status'])) {
-                                        'paid', 'completed' => 'text-green-700 bg-green-100',
+                                        'paid', 'approved', 'completed' => 'text-green-700 bg-green-100',
                                         'pending' => 'text-yellow-700 bg-yellow-100',
                                         'failed' => 'text-red-700 bg-red-100',
                                         default => 'text-gray-700 bg-gray-100'
                                     } ?>">
                                     <?= ucfirst($p['status']) ?>
                                 </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <?php if(!empty($p['payment_url'])): ?>
+                                    <a href="<?= htmlspecialchars($p['payment_url']) ?>" target="_blank" class="text-blue-500 underline text-xs">Link</a>
+                                <?php else: ?>
+                                    <span class="text-gray-400 text-xs">N/A</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -211,6 +247,41 @@ $stmt->close();
         <h3 class="font-bold text-lg mb-4">Booking Items</h3>
         <div id="itemsContent" class="mb-4 text-sm max-h-60 overflow-y-auto">Loading...</div>
         <button onclick="document.getElementById('itemsModal').classList.add('hidden')" class="bg-gray-500 text-white px-4 py-2 rounded">Close</button>
+    </div>
+</div>
+
+<!-- Create Payment Modal -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 transition-opacity">
+    <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Create Payment Request</h3>
+        <form id="paymentForm" onsubmit="handleCreatePayment(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Booking ID</label>
+                <select name="booking_id" required class="w-full border rounded px-3 py-2 text-sm bg-gray-50">
+                    <option value="">Select Booking...</option>
+                    <?php foreach($bookings as $b): 
+                        if(in_array($b['status'], ['cancelled', 'rejected'])) continue; // Skip cancelled
+                    ?>
+                        <option value="<?= $b['id'] ?>">#<?= $b['id'] ?> - <?= date('M d', strtotime($b['appointment_date'])) ?> (Total: ₱<?= $b['total_amount'] ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Amount (PHP)</label>
+                <input type="number" name="amount" min="1" step="0.01" required class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Description / Notes</label>
+                <input type="text" name="notes" placeholder="e.g. Down Payment, Installment 1" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('paymentModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-semibold">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold" id="submitPayBtn">Generate Link</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -261,6 +332,38 @@ function viewBookingItems(bookingId) {
     .catch(err => {
         content.innerHTML = 'Error fetching items.';
         console.error(err);
+    });
+}
+
+function handleCreatePayment(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitPayBtn');
+    const originalText = btn.innerText;
+    btn.innerText = 'Processing...';
+    btn.disabled = true;
+
+    const formData = new FormData(e.target);
+
+    fetch('create_payment_request.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            alert('Payment link created successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('An network error occurred.');
+    })
+    .finally(() => {
+        btn.innerText = originalText;
+        btn.disabled = false;
     });
 }
 </script>

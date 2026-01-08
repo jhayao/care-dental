@@ -133,6 +133,39 @@ $end_time = $start_time + ($total_minutes * 60);
 
             <hr class="my-4">
 
+            <hr class="my-4">
+            
+            <!-- Payment Progress -->
+            <?php
+                // Fetch paid amount
+                $stmt_p = $conn->prepare("SELECT SUM(total_price) as paid FROM payments WHERE booking_id = ? AND status IN ('paid', 'approved', 'completed')");
+                $stmt_p->bind_param("i", $booking['id']);
+                $stmt_p->execute();
+                $paid_res = $stmt_p->get_result()->fetch_assoc();
+                $paid_amount = $paid_res['paid'] ?? 0;
+                $stmt_p->close();
+                
+                $balance = $booking['total_amount'] - $paid_amount;
+                if ($balance < 0) $balance = 0;
+            ?>
+            <div class="mb-4 bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center">
+                <div class="text-sm">
+                    <p class="text-gray-600">Total Contract Price:</p>
+                    <p class="font-bold text-gray-800 text-lg">₱<?= number_format($booking['total_amount'], 2) ?></p>
+                </div>
+                <div class="text-sm">
+                    <p class="text-gray-600">Amount Paid:</p>
+                    <p class="font-bold text-green-600 text-lg">₱<?= number_format($paid_amount, 2) ?></p>
+                </div>
+                <div class="text-sm">
+                    <p class="text-gray-600">Remaining Balance:</p>
+                    <p class="font-bold <?= $balance > 0 ? 'text-red-600' : 'text-gray-500' ?> text-lg">₱<?= number_format($balance, 2) ?></p>
+                </div>
+                <?php if ($balance > 0): ?>
+                    <a href="payments.php" class="mt-2 md:mt-0 bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">View Payments</a>
+                <?php endif; ?>
+            </div>
+
             <h3 class="text-xl font-semibold text-gray-800 mb-3">Included Services</h3>
             <?php
             foreach ($items as $item):

@@ -9,7 +9,7 @@
 // Database credentials (matching db_connect.php)
 $host     = "localhost";
 $username = "root";
-$password = "password";
+$password = "";
 $dbname   = "dentist"; // Target database name
 $sqlFile  = "./script.sql";
 

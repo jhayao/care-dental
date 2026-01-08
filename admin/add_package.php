@@ -19,6 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // DEBUG:
     // var_dump($status); die();
     $price = $_POST['price'] ?? 0;
+    $down_payment = $_POST['down_payment'] ?? 0;
+    $installment_months = (int)($_POST['installment_months'] ?? 0);
     $service_ids = $_POST['service_ids'] ?? []; // Array of selected service IDs
     $posted_by = $_SESSION['user_id'];
 
@@ -59,25 +61,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = 'Inactive';
     }
 
-    // Prepare insert - Interpolating status directly to bypass potential bind_param issue with ENUM
+    // Prepare insert
     $stmt = $conn->prepare("
         INSERT INTO packages
-            (posted_by, package_name, description, inclusions, status, price, duration_minutes, created_at, updated_at)
+            (posted_by, package_name, description, inclusions, status, price, down_payment, installment_months, duration_minutes, created_at, updated_at)
         VALUES
-            (?, ?, ?, ?, '$status', ?, ?, NOW(), NOW())
+            (?, ?, ?, ?, '$status', ?, ?, ?, ?, NOW(), NOW())
     ");
     
-    // Type string changed from 'isssidi' to 'issidi' (removed one 's' for status)
-    // removed $status from bind_param arguments
-
+    // Type string: issiddii (i=posted_by, s=name, s=desc, s=json, d=price, d=down, i=months, i=duration)
     if ($stmt) {
         $stmt->bind_param(
-            "issidi",
+            "isssddii",
             $posted_by,
             $package_name,
             $description,
             $inclusions_json,
             $price,
+            $down_payment,
+            $installment_months,
             $total_duration
         );
 

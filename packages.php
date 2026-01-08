@@ -70,6 +70,11 @@ if (isset($_SESSION['flash_message'])) {
                             Price:
                             <?php echo $row['price'] ? "₱" . number_format($row['price'], 2) : "Free"; ?>
                         </p>
+                        <?php if(!empty($row['down_payment']) && $row['down_payment'] > 0 && $row['down_payment'] < $row['price']): ?>
+                             <p class="text-sm text-blue-600 font-medium">
+                                Down Payment: ₱<?php echo number_format($row['down_payment'], 2); ?>
+                             </p>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Button + Duration -->

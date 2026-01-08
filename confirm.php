@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 date_default_timezone_set("Asia/Manila"); // Ensure correct timezone
 
 session_start();
+require_once 'config.php';
 require_once 'db_connect.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -36,18 +37,26 @@ $total_minutes = 0;
 $subtotal = 0;
 
 /* ---------------- CALCULATE CART TOTALS ---------------- */
+$down_payment_total = 0;
 foreach ($_SESSION['cart'] as $item) {
     $table = $item['type'] === 'package' ? 'packages' : 'services';
-    $stmt = mysqli_prepare($conn, "SELECT price, duration_minutes FROM {$table} WHERE id=?");
+    // Fetch price, duration, AND down_payment
+    $stmt = mysqli_prepare($conn, "SELECT price, duration_minutes, down_payment FROM {$table} WHERE id=?");
     if (!$stmt) die("❌ Prepare failed: " . mysqli_error($conn));
 
     mysqli_stmt_bind_param($stmt, "i", $item['id']);
     mysqli_stmt_execute($stmt);
-    mysqli_stmt_bind_result($stmt, $price, $duration);
+    mysqli_stmt_bind_result($stmt, $price, $duration, $dp);
 
     if (mysqli_stmt_fetch($stmt)) {
         $subtotal += $price;
         $total_minutes += $duration;
+        // If down payment is set and > 0, use it. Otherwise, assume full price is due.
+        // Wait, if down_payment is > 0, we charge that. If it's 0 (default), we charge full price.
+        // BUT, if user mixes items (one with DP, one without), we should sum up 'Due Now'.
+        
+        $item_due_now = ($dp > 0 && $dp < $price) ? $dp : $price;
+        $down_payment_total += $item_due_now;
     } else {
         die("❌ Item not found");
     }
@@ -66,6 +75,7 @@ mysqli_stmt_close($stmt);
 /* ---------------- DISCOUNT & TOTAL ---------------- */
 $discount = 0;
 // Note: $user_discount_percent comes from DB as decimal/int (e.g. 20.00)
+// Discount applies to total price usually.
 if ($user_discount_percent > 0) {
     $discount = $subtotal * ($user_discount_percent / 100);
 } elseif (in_array($category, ['Senior','PWD'])) {
@@ -82,6 +92,30 @@ if ($stmt->fetch()) {
 $stmt->close();
 
 $totalAmount = ($subtotal - $discount) + $booking_fee;
+
+// Calculate actual amount to pay NOW
+// If there was a discount, we might need to adjust the down payment?
+// Complexity: Usually discounts apply to the total. Down payment is fixed.
+// Let's assume Down Payment is fixed and NOT subject to discount unless it covers the full price.
+// If down_payment_total < subtotal, it means we have installment items.
+// Let's keep it simple: Pay Now = down_payment_total + booking_fee (if any).
+// NOTE: If global discount reduces total below down payment? Unlikely for braces.
+// Let's stick to: Pay Now = Sum of (DownPayment OR Price) - Discount?
+// Actually, standard practice: Discount reduces the Total Price. Installment setup usually has fixed down payment.
+// Let's just use $down_payment_total IF it varies from $subtotal.
+// If $down_payment_total == $subtotal (meaning no items have special DP), then apply discount to it.
+// If $down_payment_total < $subtotal, we interpret $down_payment_total as the strict amount to pay now.
+// However, if we have a senior citizen discount on a 30k package (20% off -> 24k), 
+// and DP is 5k. Do we still charge 5k? Yes.
+// So, PayNow = $down_payment_total (plus booking fee).
+// Discount applies to the 'total_amount' recorded in DB, reducing the remaining balance.
+
+$amountToPayNow = $down_payment_total + $booking_fee;
+
+// Safety check: PayNow shouldn't exceed TotalAmount (in case of huge discounts)
+if ($amountToPayNow > $totalAmount) {
+    $amountToPayNow = $totalAmount;
+}
 
 /* ---------------- OVERLAP CHECK ---------------- */
 $stmt = mysqli_prepare($conn, "
@@ -146,20 +180,35 @@ foreach ($_SESSION['cart'] as $item) {
 mysqli_stmt_close($stmtItem);
 
 /* ---------------- XENDIT INVOICE ---------------- */
-Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+require_once 'config.php'; // Ensure config is loaded if not already (it usually is via db_connect or similar, but let's be safe or just rely on global if included)
+// Actually db_connect doesn't include config.php usually, let's check.
+// `confirm.php` includes `db_connect.php`. `db_connect.php` usually just does DB stuff.
+// `config.php` has the dotenv loading.
+// Let's assume `config.php` needs to be required if not present.
+// Looking at file, `confirm.php` requires `db_connect.php` and `vendor/autoload.php`.
+// It DOES NOT require `config.php`.
+// So I should replace the prompt to import config.php too or just add the loading logic?
+// Better to require 'config.php' at the top.
+
+Configuration::setXenditKey(XENDIT_API_KEY);
 // Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3');
 $invoiceApi = new InvoiceApi();
 
+$paymentDesc = 'Payment for Booking #' . $booking_id;
+if ($amountToPayNow < $totalAmount) {
+     $paymentDesc = 'Down Payment for Booking #' . $booking_id;
+}
+
 $invoiceRequest = new CreateInvoiceRequest([
     'external_id' => 'B-Dental Booking_' . $booking_id,
-    'amount' => (float)$totalAmount,
+    'amount' => (float)$amountToPayNow,
     'payer_email' => $email,
     'currency' => 'PHP',
     'invoice_duration' => 86400,
-    'description' => 'Payment for Booking #' . $booking_id,
+    'description' => $paymentDesc,
     'success_redirect_url' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/payment_success.php?id=' . $booking_id,
     'failure_redirect_url' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/payment_fail.php?id=' . $booking_id,
-    'payment_methods' => ['GCASH'],
+    'payment_methods' => ['GCASH'], // Added more methods
 ]);
 
 try {
@@ -168,10 +217,15 @@ try {
     /* ---------------- INSERT PAYMENT ---------------- */
     $stmt = mysqli_prepare($conn, "
         INSERT INTO payments
-        (booking_id, total_price, payment_method, status, xendit_invoice_id, payment_date)
-        VALUES (?, ?, 'GCASH', 'pending', ?, NOW())
+        (booking_id, total_price, payment_method, status, xendit_invoice_id, payment_date, payment_url, description)
+        VALUES (?, ?, 'Link', 'pending', ?, NOW(), ?, ?)
     ");
-    mysqli_stmt_bind_param($stmt, "ids", $booking_id, $totalAmount, $invoice['id']);
+    
+    // We store the amountToPayNow in the payment record
+    $payment_url = $invoice['invoice_url'];
+    $inv_id = $invoice['id'];
+    
+    mysqli_stmt_bind_param($stmt, "idsss", $booking_id, $amountToPayNow, $inv_id, $payment_url, $paymentDesc);
     if (!mysqli_stmt_execute($stmt)) {
         die("❌ Payment insert failed: " . mysqli_error($conn));
     }

@@ -65,7 +65,7 @@ if (!$service) {
                 <textarea name="description" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" required><?= htmlspecialchars($service['description']) ?></textarea>
             </div>
 
-            <div class="mb-4 grid grid-cols-2 gap-4">
+            <div class="mb-4 grid grid-cols-3 gap-4">
                 <div>
                     <label class="block mb-1 font-semibold">Duration (minutes)</label>
                     <input type="number" name="duration_minutes" value="<?= $service['duration_minutes'] ?>" min="1" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -74,6 +74,15 @@ if (!$service) {
                      <label class="block mb-1 font-semibold">Price</label>
                      <input type="number" step="0.01" name="price" value="<?= $service['price'] ?>" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
+                <div>
+                     <label class="block mb-1 font-semibold text-gray-700">Down Payment</label>
+                     <input type="number" step="0.01" name="down_payment" value="<?= $service['down_payment'] ?? 0 ?>" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                 <label class="block mb-1 font-semibold text-blue-700">Installment Term (Months)</label>
+                 <input type="number" name="installment_months" min="0" max="24" value="<?= $service['installment_months'] ?? 0 ?>" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="mb-4">

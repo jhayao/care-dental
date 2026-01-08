@@ -61,6 +61,11 @@ if (isset($_SESSION['flash_message'])) {
                             <p class="font-bold text-green-600 mb-2">
                                 ₱<?php echo number_format($service['price'], 2); ?>
                             </p>
+                            <?php if(!empty($service['down_payment']) && $service['down_payment'] > 0 && $service['down_payment'] < $service['price']): ?>
+                                <p class="text-sm text-blue-600 font-medium mb-2">
+                                    Down Payment: ₱<?php echo number_format($service['down_payment'], 2); ?>
+                                </p>
+                            <?php endif; ?>
                         <?php endif; ?>
 
                     

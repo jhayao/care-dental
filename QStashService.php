@@ -1,66 +1,46 @@
 <?php
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Dotenv\Dotenv;
+
+// Load .env if not already loaded
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
 
 class QStashService {
-    private static $qstashUrl = null; 
-    private static $token = null;
-
-    public static function getUrl() {
-        if (self::$qstashUrl) return self::$qstashUrl;
-        return getenv('QSTASH_URL') ?: ($_ENV['QSTASH_URL'] ?? 'http://127.0.0.1:8080');
-    }
-
-    public static function getToken() {
-        if (self::$token) return self::$token;
-        // Try ENV, then fallback to dev token
-        return getenv('QSTASH_TOKEN') ?: ($_ENV['QSTASH_TOKEN'] ?? 'eyJVc2VySUQiOiJkZWZhdWx0VXNlciIsIlBhc3N3b3JkIjoiZGVmYXVsdFBhc3N3b3JkIn0=');
-    }
-
-    public static function setUrl($url) {
-        self::$qstashUrl = $url;
-    }
-
-    public static function setToken($token) {
-        self::$token = $token;
-    }
-
-    /**
-     * Schedule a message
-     * 
-     * @param string $destinationUrl The URL QStash should hit
-     * @param array $payload JSON serializable data
-     * @param int $delaySeconds Delay in seconds (0 for immediate)
-     * @return mixed Response from QStash
-     */
-    public static function schedule($destinationUrl, $payload, $delaySeconds = 0) {
-        $url = self::getUrl() . '/v2/publish/' . $destinationUrl;
+    public static function schedule($url, $payload = [], $delaySeconds = 0) {
+        $token = $_ENV['QSTASH_TOKEN'] ?? getenv('QSTASH_TOKEN');
         
+        if (!$token) {
+            error_log("QStash Token not found!");
+            return false;
+        }
+
         $headers = [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . self::getToken()
+            "Authorization: Bearer $token",
+            "Content-Type: application/json",
+            "Upstash-Forward-Content-Type: application/json"
         ];
 
         if ($delaySeconds > 0) {
-            $headers[] = 'Upstash-Delay: ' . $delaySeconds . 's';
+            $headers[] = "Upstash-Delay: {$delaySeconds}s";
         }
 
-        $headers[] = 'Upstash-Retries: 3'; // Retry 3 times on failure
-
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true
-        ]);
+        $ch = curl_init("https://qstash.upstash.io/v1/publish/" . $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            return json_decode($response, true);
+            return true;
         } else {
-            error_log("QStash Error: HTTP $httpCode - $response");
+            error_log("QStash Error ($httpCode): $response - $error");
             return false;
         }
     }

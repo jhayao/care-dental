@@ -42,7 +42,7 @@ if (!isset($_SESSION['user_id'])) {
                 <label class="block mb-1 font-semibold">Description</label>
                 <textarea name="description" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" required></textarea>
             </div>
-            <div class="mb-4 grid grid-cols-2 gap-4">
+            <div class="mb-4 grid grid-cols-3 gap-4">
                 <div>
                     <label class="block mb-1 font-semibold">Duration (minutes)</label>
                     <input type="number" name="duration_minutes" min="1" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -51,6 +51,15 @@ if (!isset($_SESSION['user_id'])) {
                      <label class="block mb-1 font-semibold">Price</label>
                      <input type="number" step="0.01" name="price" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
+                <div>
+                     <label class="block mb-1 font-semibold text-gray-700">Down Payment</label>
+                     <input type="number" step="0.01" name="down_payment" value="0" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mb-4">
+                 <label class="block mb-1 font-semibold text-blue-700">Installment Term (Months)</label>
+                 <input type="number" name="installment_months" min="0" max="24" value="0" class="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. 6">
+                 <p class="text-xs text-gray-500 mt-1">If > 0, remaining balance is split over this many months.</p>
             </div>
             <div class="mb-4">
                 <label class="block mb-1 font-semibold">Status</label>

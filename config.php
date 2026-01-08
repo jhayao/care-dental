@@ -33,4 +33,10 @@ $app_url = rtrim($app_url, '/');
 if (!defined('APP_URL')) {
     define('APP_URL', $app_url);
 }
+
+// Xendit API Key
+$xendit_key = $_ENV['XENDIT_API_KEY'] ?? getenv('XENDIT_API_KEY');
+if (!defined('XENDIT_API_KEY')) {
+    define('XENDIT_API_KEY', $xendit_key);
+}
 ?>

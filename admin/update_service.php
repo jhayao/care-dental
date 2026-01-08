@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description']);
     $status = trim($_POST['status']);
     $price = floatval($_POST['price']);
+    $down_payment = floatval($_POST['down_payment'] ?? 0);
+    $installment_months = intval($_POST['installment_months'] ?? 0);
     $duration_minutes = intval($_POST['duration_minutes']);
 
     if (empty($service_name) || empty($description) || empty($status) || $price < 0 || $duration_minutes < 0) {
@@ -48,21 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update with image - literal status
         $stmt = $conn->prepare("
             UPDATE services 
-            SET service_name = ?, description = ?, status = '$status', price = ?, duration_minutes = ?, service_image = ?, updated_at = NOW() 
+            SET service_name = ?, description = ?, status = '$status', price = ?, down_payment = ?, installment_months = ?, duration_minutes = ?, service_image = ?, updated_at = NOW() 
             WHERE id = ?
         ");
-        // Removed status 's' from bind_param
-        // Types: name(s), desc(s), price(d), dur(i), image(s), id(i) -> ssdisi
-        $stmt->bind_param("ssdisi", $service_name, $description, $price, $duration_minutes, $service_image_path, $id);
+        // Types: name(s), desc(s), price(d), dp(d), months(i), dur(i), image(s), id(i) -> ssddiisi
+        $stmt->bind_param("ssddiisi", $service_name, $description, $price, $down_payment, $installment_months, $duration_minutes, $service_image_path, $id);
     } else {
         // Update without image - literal status
         $stmt = $conn->prepare("
             UPDATE services 
-            SET service_name = ?, description = ?, status = '$status', price = ?, duration_minutes = ?, updated_at = NOW() 
+            SET service_name = ?, description = ?, status = '$status', price = ?, down_payment = ?, installment_months = ?, duration_minutes = ?, updated_at = NOW() 
             WHERE id = ?
         ");
-         // Types: name(s), desc(s), price(d), dur(i), id(i) -> ssdii
-        $stmt->bind_param("ssdii", $service_name, $description, $price, $duration_minutes, $id);
+         // Types: name(s), desc(s), price(d), dp(d), months(i), dur(i), id(i) -> ssddiii
+        $stmt->bind_param("ssddiii", $service_name, $description, $price, $down_payment, $installment_months, $duration_minutes, $id);
     }
 
     if ($stmt->execute()) {

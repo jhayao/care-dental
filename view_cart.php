@@ -156,7 +156,7 @@ function closeModal() {
 <h2 class="text-2xl font-bold border-b pb-2 text-center">Appointment Summary</h2>
 
 <div>
-    <div class="flex justify-between"><span>Subtotal</span><span>₱<?= number_format($subtotal,2) ?></span></div>
+    <div class="flex justify-between"><span>Subtotal (Total Value)</span><span>₱<?= number_format($subtotal,2) ?></span></div>
     <?php if ($discount > 0): ?>
         <div class="flex justify-between text-yellow-600">
             <span>Discount (<?= $category ?>)</span>
@@ -169,10 +169,51 @@ function closeModal() {
             <span>₱<?= number_format($booking_fee,2) ?></span>
         </div>
     <?php endif; ?>
-    <div class="flex justify-between font-bold text-lg border-t pt-2">
-        <span>Total</span>
+    <div class="flex justify-between font-bold text-gray-500 border-t pt-2">
+        <span>Total Contract Price</span>
         <span>₱<?= number_format($total,2) ?></span>
     </div>
+
+    <!-- Down Payment Logic Display -->
+    <?php 
+        $pay_now = 0;
+        foreach ($_SESSION['cart'] as $item) {
+             $d = get_item_details($conn, $item['type'], $item['id']);
+             if ($d) {
+                 $dp = (float)($d['down_payment'] ?? 0);
+                 $price = (float)$d['price'];
+                 
+                 // If down payment is set and < price, pay that. Else pay full price.
+                 if ($dp > 0 && $dp < $price) {
+                     $pay_now += $dp;
+                 } else {
+                     $pay_now += $price;
+                 }
+             }
+        }
+        // Apply booking fee to Pay Now as well
+        $pay_now += $booking_fee;
+        
+        // If discount lowers the TOTAL below Pay Now? Rare.
+        // But if TOTAL < PAY NOW, cap Pay Now at Total.
+        if ($pay_now > $total) {
+            $pay_now = $total;
+        }
+    ?>
+
+    <?php if ($pay_now < $total): ?>
+        <div class="flex justify-between font-bold text-xl text-blue-700 mt-2 border-t border-blue-200 pt-2">
+            <span>Pay Now (Down Payment)</span>
+            <span>₱<?= number_format($pay_now,2) ?></span>
+        </div>
+        <div class="text-xs text-right text-gray-500">Remaining balance payable via installments.</div>
+    <?php else: ?>
+        <div class="flex justify-between font-bold text-xl text-blue-700 mt-2">
+            <span>Amount to Pay</span>
+            <span>₱<?= number_format($pay_now,2) ?></span>
+        </div>
+    <?php endif; ?>
+
     <div class="flex justify-between mt-2">
         <span>Duration Time:</span>
         <span class="font-semibold text-red-600">

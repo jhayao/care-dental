@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'db_connect.php';
+require_once 'config.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Xendit\Configuration;
@@ -14,7 +15,7 @@ if (!isset($_GET['id'])) {
 $booking_id = (int) $_GET['id'];
 
 // Fetch Xendit Invoice ID from DB
-$stmt = $conn->prepare("SELECT xendit_invoice_id, status FROM payments WHERE booking_id = ? LIMIT 1");
+$stmt = $conn->prepare("SELECT xendit_invoice_id, status, total_price FROM payments WHERE booking_id = ? LIMIT 1");
 $stmt->bind_param("i", $booking_id);
 $stmt->execute();
 $payment = $stmt->get_result()->fetch_assoc();
@@ -26,8 +27,9 @@ if (!$payment) {
 
 // Check Xendit Status (Fallback if Webhook failed)
 // Use the same key as in confirm.php
-// Configuration::setXenditKey('xnd_development_NUCDa05e0ZnIklrBuGxCPDleszx1JWlq2khKSc97CkLreQ4I8k7eyLfspzff3'); 
-Configuration::setXenditKey('xnd_production_A2pv3BkrsjtoJNWAmhkcKL93KtGiaXZp6ohf7Umc4u55bly2nHTxshpN4kTrmc');
+// Check Xendit Status (Fallback if Webhook failed)
+// Use the same key as in confirm.php
+Configuration::setXenditKey(XENDIT_API_KEY);
 
 $apiInstance = new InvoiceApi();
 
@@ -56,6 +58,95 @@ try {
         // NEW: Queue 'Approved' Email
         require_once 'config.php';
         require_once 'QStashService.php';
+        
+        // ----------------- AUTOMATED INSTALLMENTS -----------------
+        // 1. Check if booking includes items with installment_months > 0
+        // Calculate remaining balance to be split
+        
+        // Fetch Booking Total & Down Payment paid
+        // We know 'payment_id' (this transaction) covered the Down Payment (amountToPayNow)
+        // We need to see if there is a 'remaining balance'.
+        // Actually, 'total_amount' in bookings table is the FULL price.
+        // 'total_price' in payments table is what was just paid.
+        
+        $b_query = $conn->prepare("SELECT total_amount FROM bookings WHERE id=?");
+        $b_query->bind_param("i", $booking_id);
+        $b_query->execute();
+        $b_res = $b_query->get_result()->fetch_assoc();
+        $b_query->close();
+        
+        $total_booking_val = $b_res['total_amount'] ?? 0;
+        $amount_paid_now = $payment['total_price'];
+        $remaining = $total_booking_val - $amount_paid_now;
+        
+        if ($remaining > 100) { // If significant remaining balance > 100 PHP
+             // Find the MAX installment term from the bought items
+             // If multiple items, we usually just take the max term or average? 
+             // Simplest: Check if any item has installment_months > 0.
+             // We need to join booking_items -> packages/services
+             
+             $max_months = 0;
+             
+             // Check Packages
+             $q_pkg = $conn->query("
+                SELECT p.installment_months 
+                FROM booking_items bi 
+                JOIN packages p ON bi.item_id = p.id 
+                WHERE bi.booking_id = $booking_id AND bi.item_type='package'
+             ");
+             while($row = $q_pkg->fetch_assoc()) {
+                 if($row['installment_months'] > $max_months) $max_months = $row['installment_months'];
+             }
+             
+             // Check Services
+             $q_svc = $conn->query("
+                SELECT s.installment_months 
+                FROM booking_items bi 
+                JOIN services s ON bi.item_id = s.id 
+                WHERE bi.booking_id = $booking_id AND bi.item_type='service'
+             ");
+             while($row = $q_svc->fetch_assoc()) {
+                 if($row['installment_months'] > $max_months) $max_months = $row['installment_months'];
+             }
+             
+             if ($max_months > 0) {
+                 $monthly_amount = $remaining / $max_months;
+                 
+                 // Create Scheduled Payments
+                 $stmt_sched = $conn->prepare("
+                    INSERT INTO payments (booking_id, total_price, payment_method, status, due_date, installment_number, description, payment_date)
+                    VALUES (?, ?, 'Link', 'scheduled', ?, ?, ?, NULL)
+                 ");
+                 
+                 for ($i = 1; $i <= $max_months; $i++) {
+                     $due_date = date('Y-m-d', strtotime("+$i month")); // Due in +i months
+                     $desc = "Installment #$i of $max_months";
+                     
+                     // We use status='scheduled'. 
+                     // payment_date is NULL because not paid yet.
+                     
+                     $stmt_sched->bind_param("idsis", $booking_id, $monthly_amount, $due_date, $i, $desc);
+                     $stmt_sched->execute();
+                     $sched_pay_id = $stmt_sched->insert_id;
+                     
+                     // Schedule QStash Trigger
+                     // Calculate delay in seconds. 
+                     // For demo purposes, maybe shorten it? No, stick to real time: +30 days * $i
+                     $delay = $i * 30 * 24 * 3600; 
+                     // Or better: $delay = strtotime($due_date) - time();
+                     $delay = strtotime($due_date) - time();
+                     if ($delay < 0) $delay = 0;
+                     
+                     QStashService::schedule(
+                        APP_URL . "/process_scheduled_payment.php",
+                        ['payment_id' => $sched_pay_id],
+                        $delay
+                     );
+                 }
+                 $stmt_sched->close();
+             }
+        }
+
         QStashService::schedule(
             APP_URL . "/webhook_notification.php", 
             ['booking_id' => $booking_id, 'type' => 'approved'], 
