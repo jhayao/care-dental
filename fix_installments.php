@@ -5,11 +5,22 @@ require_once 'db_connect.php';
 require_once 'config.php';
 require_once 'QStashService.php';
 
-$booking_id = 49; // HARDCODED for the user's failed booking
+$booking_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($booking_id <= 0) {
+    die("Please provide a valid Booking ID. Example: fix_installments.php?id=16");
+}
 echo "Fixing installments for Booking #$booking_id ...<br>";
 
 // 1. Get Booking & Payment details
-$b_res = $conn->query("SELECT total_amount, user_id FROM bookings WHERE id=$booking_id")->fetch_assoc();
+$stmt = $conn->prepare("SELECT total_amount, user_id FROM bookings WHERE id = ?");
+$stmt->bind_param("i", $booking_id);
+$stmt->execute();
+$b_res = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$b_res) {
+    die("Error: Booking #$booking_id not found in database.");
+}
 $total_booking_val = $b_res['total_amount'];
 
 // Calculate already paid
