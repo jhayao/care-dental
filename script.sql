@@ -177,7 +177,7 @@ create or replace table payments
     booking_id        bigint unsigned                                                                               not null,
     total_price       decimal(10, 2)                                                                                not null,
     payment_method    varchar(255)                                                                                  not null,
-    status            enum ('pending', 'approved', 'declined', 'cancelled', 'refunded') default 'pending'           null,
+    status            enum ('pending', 'approved', 'declined', 'cancelled', 'refunded', 'scheduled') default 'pending'           null,
     xendit_invoice_id varchar(255)                                                                                  not null,
     xendit_payment_id varchar(255)                                                                                  null,
     payment_url       text                                                                                          null,

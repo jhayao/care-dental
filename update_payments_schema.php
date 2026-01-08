@@ -38,3 +38,12 @@ try {
     echo "NOTE installment_number: " . $e->getMessage() . "<br>";
 }
 ?>
+
+<?php
+try {
+    $conn->query("ALTER TABLE payments MODIFY COLUMN status ENUM('pending', 'approved', 'declined', 'cancelled', 'refunded', 'scheduled') DEFAULT 'pending'");
+    echo "SUCCESS: 'scheduled' added to status enum.<br>";
+} catch (Exception $e) {
+    echo "NOTE status enum: " . $e->getMessage() . "<br>";
+}
+?>
