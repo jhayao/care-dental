@@ -19,3 +19,13 @@ try {
     echo "ERROR: " . $e->getMessage();
 }
 ?>
+
+<?php
+try {
+    $conn->query("ALTER TABLE payments ADD COLUMN due_date DATE NULL");
+    echo "SUCCESS: due_date column added.<br>";
+} catch (Exception $e) {
+    // It might already exist, checks are good but simple try-catch works for quick fix script
+    echo "NOTE due_date: " . $e->getMessage() . "<br>";
+}
+?>
