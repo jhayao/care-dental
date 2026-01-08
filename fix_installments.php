@@ -45,7 +45,7 @@ if ($remaining > 0) {
      if ($max_months > 0) {
          $monthly_amount = $remaining / $max_months;
          
-         $stmt_sched = $conn->prepare("INSERT INTO payments (booking_id, total_price, payment_method, status, due_date, installment_number, description) VALUES (?, ?, 'Link', 'scheduled', ?, ?, ?)");
+         $stmt_sched = $conn->prepare("INSERT INTO payments (booking_id, total_price, payment_method, status, due_date, installment_number, description, xendit_invoice_id) VALUES (?, ?, 'Link', 'scheduled', ?, ?, ?, '')");
          
          for ($i = 1; $i <= $max_months; $i++) {
              $due_date = date('Y-m-d', strtotime("+$i month")); 

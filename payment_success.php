@@ -114,8 +114,8 @@ try {
                  
                  // Create Scheduled Payments
                  $stmt_sched = $conn->prepare("
-                    INSERT INTO payments (booking_id, total_price, payment_method, status, due_date, installment_number, description, payment_date)
-                    VALUES (?, ?, 'Link', 'scheduled', ?, ?, ?, NULL)
+                    INSERT INTO payments (booking_id, total_price, payment_method, status, due_date, installment_number, description, payment_date, xendit_invoice_id)
+                    VALUES (?, ?, 'Link', 'scheduled', ?, ?, ?, NULL, '')
                  ");
                  
                  for ($i = 1; $i <= $max_months; $i++) {
